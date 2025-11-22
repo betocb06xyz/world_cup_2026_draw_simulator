@@ -227,7 +227,7 @@ class WCDraw:
                 if federation_count >= MAX_TEAMS_IN_GROUP[federation]:
                     continue
 
-                if self.is_valid(team, group_ix):
+                if self.is_valid(team, group_ix, pot_number):
                     return group_ix
 
         # print(f"FAILED TO PLACE: {team} - {FEDERATIONS[team]} from Pot: {pot_number+1}") # DEBUG
@@ -242,10 +242,13 @@ class WCDraw:
     def place_team_in_group(self, team, group_ix):
         self.groups[group_ix].append(team)
 
-    def is_valid(self, test_team, test_group_ix):
+    def is_valid(self, team, group_ix, pot_number):
         wc_draw_copy = self.get_copy()
-        wc_draw_copy.place_team_in_group(test_team, test_group_ix)
+        wc_draw_copy.place_team_in_group(team, group_ix)
         # print(wc_draw_copy) # DEBUG
+
+        if pot_number == 0: # Heuristic: No need to do deep search if it's the first pot
+            return True
 
         if wc_draw_copy.done():
             return True
