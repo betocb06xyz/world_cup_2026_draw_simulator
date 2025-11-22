@@ -249,6 +249,45 @@ class WCDraw:
         if pot_number == 0: # Heuristic: No need to do deep search if it's the first pot
             return True
 
+        if pot_number == 2:
+            valid_uefa = 0
+            valid_caf = 0
+            valid_afc = 0
+            valid_concacaf = 0
+            valid_intercontinental_1 = 0 # [Federation.CAF, Federation.CONCACAF, Federation.OFC]
+            valid_intercontinental_2 = 0 # [Federation.AFC, Federation.CONMEBOL, Federation.CONCACAF]
+            for group in wc_draw_copy.groups:
+                if wc_draw_copy.get_federation_count(group, Federation.UEFA) < 2:
+                    valid_uefa += 1
+                if wc_draw_copy.get_federation_count(group, Federation.CAF) == 0:
+                    valid_caf += 1
+                if wc_draw_copy.get_federation_count(group, Federation.AFC) == 0:
+                    valid_afc += 1
+                if wc_draw_copy.get_federation_count(group, Federation.CONCACAF) == 0:
+                    valid_concacaf += 1
+
+                if  wc_draw_copy.get_federation_count(group, Federation.CAF) == 0 and \
+                    wc_draw_copy.get_federation_count(group, Federation.CONCACAF) == 0:
+                    valid_intercontinental_1 += 1
+
+                if  wc_draw_copy.get_federation_count(group, Federation.AFC) == 0 and \
+                    wc_draw_copy.get_federation_count(group, Federation.CONMEBOL) == 0 and \
+                    wc_draw_copy.get_federation_count(group, Federation.CONCACAF) == 0:
+                    valid_intercontinental_2 += 1
+
+            if valid_uefa < 4:
+                return False
+            if valid_caf < 3:
+                return False
+            if valid_afc < 2:
+                return False
+            if valid_concacaf < 4:
+                return False
+            if not valid_intercontinental_1:
+                return False
+            if not valid_intercontinental_2:
+                return False
+
         if wc_draw_copy.done():
             return True
         
@@ -275,7 +314,7 @@ for seed in range(100000):
         if group_ix is None:
             print(wc_draw)
             print(f"ERROR found with seed: {seed}:")
-            print(f"Could not place Team: {team} from Pot: {pot_number} in any group!")
+            print(f"Could not place Team: {team} from Pot: {pot_number+1} in any group!")
             exit(-1)
 
         wc_draw.place_team_in_group(team, group_ix)
