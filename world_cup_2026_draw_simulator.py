@@ -214,23 +214,23 @@ class WCDraw:
         return federation_count
 
     def get_valid_group_ix(self, pot_number, team):
-        # print(f"current_pot_number: {pot_number}") # DEBUG
-
         for group_ix, group in enumerate(self.groups):
             # Check if group already have a team from pot_number
             if len(group) > pot_number:
                 continue
 
             # Check number of teams from the same federation in group
+            pass_check = True
             for federation in FEDERATIONS[team]: # Playoff spots count as 'multi-federation' teams
-                federation_count = self.get_federation_count(group, federation)
-                if federation_count >= MAX_TEAMS_IN_GROUP[federation]:
-                    continue
+                if self.get_federation_count(group, federation) >= MAX_TEAMS_IN_GROUP[federation]:
+                    pass_check = False
+                    break
+            if not pass_check:
+                continue
 
-                if self.is_valid(team, group_ix, pot_number):
-                    return group_ix
+            if self.is_valid(team, group_ix, pot_number):
+                return group_ix
 
-        # print(f"FAILED TO PLACE: {team} - {FEDERATIONS[team]} from Pot: {pot_number+1}") # DEBUG
         return
 
     def draw_team_randomly(self) -> bool:
@@ -245,7 +245,6 @@ class WCDraw:
     def is_valid(self, team, group_ix, pot_number):
         wc_draw_copy = self.get_copy()
         wc_draw_copy.place_team_in_group(team, group_ix)
-        # print(wc_draw_copy) # DEBUG
 
         if pot_number == 0: # Heuristic: No need to do deep search if it's the first pot
             return True
