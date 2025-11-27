@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIFA 2026 World Cup Draw Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Loading FIFA 2026 Draw Simulator...</p>
+            <p class="loading-detail">Initializing...</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="app" class="container" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <h1>FIFA 2026 World Cup Draw Simulator</h1>
+            <p class="subtitle">Interactive Group Stage Draw</p>
+            <button id="reset-btn" class="btn btn-secondary">
+                <span>↻</span> Start Over
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel: Pots -->
+            <aside class="pots-panel">
+                <h2>Draw Pots</h2>
+
+                <!-- Current Pot Indicator -->
+                <div id="current-pot-indicator" class="current-pot-indicator">
+                    <strong>Current:</strong> <span id="current-pot-text">Pot 1</span>
+                </div>
+
+                <!-- Pot 1 -->
+                <div class="pot" id="pot-1" data-pot="1">
+                    <div class="pot-header">
+                        <h3>Pot 1</h3>
+                        <span class="pot-status" id="pot-1-status">0/12</span>
+                    </div>
+                    <div class="pot-teams" id="pot-1-teams">
+                        <!-- Teams will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Pot 2 -->
+                <div class="pot" id="pot-2" data-pot="2">
+                    <div class="pot-header">
+                        <h3>Pot 2</h3>
+                        <span class="pot-status" id="pot-2-status">0/12</span>
+                    </div>
+                    <div class="pot-teams" id="pot-2-teams">
+                        <!-- Teams will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Pot 3 -->
+                <div class="pot" id="pot-3" data-pot="3">
+                    <div class="pot-header">
+                        <h3>Pot 3</h3>
+                        <span class="pot-status" id="pot-3-status">0/12</span>
+                    </div>
+                    <div class="pot-teams" id="pot-3-teams">
+                        <!-- Teams will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Pot 4 -->
+                <div class="pot" id="pot-4" data-pot="4">
+                    <div class="pot-header">
+                        <h3>Pot 4</h3>
+                        <span class="pot-status" id="pot-4-status">0/12</span>
+                    </div>
+                    <div class="pot-teams" id="pot-4-teams">
+                        <!-- Teams will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button id="draw-one-btn" class="btn btn-primary">
+                        🎲 Draw One Team
+                    </button>
+                    <button id="run-all-btn" class="btn btn-accent">
+                        ⚡ Run Full Draw
+                    </button>
+                </div>
+
+                <!-- Draw Status -->
+                <div id="draw-status" class="draw-status">
+                    Ready to begin drawing
+                </div>
+            </aside>
+
+            <!-- Right Panel: Groups -->
+            <main class="groups-panel">
+                <h2>Groups</h2>
+                <div class="groups-grid">
+                    <!-- Groups A-L (3x4 grid) -->
+                    <div class="group" id="group-1" data-group="1">
+                        <div class="group-header">Group A</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-2" data-group="2">
+                        <div class="group-header">Group B</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-3" data-group="3">
+                        <div class="group-header">Group C</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-4" data-group="4">
+                        <div class="group-header">Group D</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-5" data-group="5">
+                        <div class="group-header">Group E</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-6" data-group="6">
+                        <div class="group-header">Group F</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-7" data-group="7">
+                        <div class="group-header">Group G</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-8" data-group="8">
+                        <div class="group-header">Group H</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-9" data-group="9">
+                        <div class="group-header">Group I</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-10" data-group="10">
+                        <div class="group-header">Group J</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-11" data-group="11">
+                        <div class="group-header">Group K</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="group" id="group-12" data-group="12">
+                        <div class="group-header">Group L</div>
+                        <div class="group-teams">
+                            <div class="team-slot" data-pot="1"></div>
+                            <div class="team-slot" data-pot="2"></div>
+                            <div class="team-slot" data-pot="3"></div>
+                            <div class="team-slot" data-pot="4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Log -->
+                <div class="assignment-log-inline">
+                    <h3>Draw History</h3>
+                    <div id="assignment-log-content" class="assignment-log-content">
+                        <!-- Assignments will appear here -->
+                    </div>
+                    <div class="github-link">
+                        <a href="https://github.com/betocb06xyz/world_cup_2026_draw_simulator" target="_blank" rel="noopener noreferrer">
+                            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                                <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                            </svg>
+                            View source code on GitHub
+                        </a>
+                        <p class="credits">Built by betocb06xyz & Claude</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>FIFA 2026 World Cup Draw Simulator | Constraint-Based Draw System</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="team_mapping.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

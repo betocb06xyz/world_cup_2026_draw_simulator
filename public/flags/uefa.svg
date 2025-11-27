@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16">
+  <!-- UEFA Blue Background -->
+  <rect width="24" height="16" fill="#003399"/>
+
+  <!-- Stars in circle -->
+  <g fill="#FFD700">
+    <circle cx="12" cy="3" r="0.8"/>
+    <circle cx="16.5" cy="5" r="0.8"/>
+    <circle cx="18.5" cy="8" r="0.8"/>
+    <circle cx="18.5" cy="11" r="0.8"/>
+    <circle cx="16.5" cy="14" r="0.8"/>
+    <circle cx="12" cy="15.5" r="0.8"/>
+    <circle cx="7.5" cy="14" r="0.8"/>
+    <circle cx="5.5" cy="11" r="0.8"/>
+    <circle cx="5.5" cy="8" r="0.8"/>
+    <circle cx="7.5" cy="5" r="0.8"/>
+  </g>
+
+  <!-- UEFA text -->
+  <text x="12" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="4" font-weight="bold" fill="white">UEFA</text>
+</svg>

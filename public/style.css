@@ -1,0 +1,645 @@
+/* FIFA 2026 World Cup Draw Simulator - Modern Minimalist Style */
+
+/* ===== CSS Reset & Base ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Color Palette - Modern Minimalist */
+    --color-primary: #2c3e50;
+    --color-secondary: #7f8c8d;
+    --color-accent: #3498db;
+    --color-success: #27ae60;
+    --color-warning: #f39c12;
+    --color-error: #e74c3c;
+    --color-background: #ffffff;
+    --color-surface: #f8f9fa;
+    --color-border: #e1e4e8;
+    --color-text: #333333;
+    --color-text-light: #6c757d;
+    --color-hover: #ecf0f1;
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 2rem;
+
+    /* Borders */
+    --border-radius: 8px;
+    --border-width: 1px;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ===== Loading Screen ===== */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto var(--spacing-md);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-detail {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+    margin-top: var(--spacing-sm);
+}
+
+/* ===== Container ===== */
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+}
+
+/* ===== Header ===== */
+.header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-xl) 0;
+    background-color: var(--color-background);
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-md);
+}
+
+#reset-btn {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+}
+
+/* ===== Buttons ===== */
+.btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    border: var(--border-width) solid var(--color-border);
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #2980b9;
+}
+
+.btn-accent {
+    background-color: var(--color-success);
+    color: white;
+    border-color: var(--color-success);
+}
+
+.btn-accent:hover:not(:disabled) {
+    background-color: #229954;
+}
+
+.btn-secondary {
+    background-color: var(--color-background);
+    border-color: var(--color-secondary);
+    color: var(--color-secondary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-hover);
+}
+
+/* ===== Main Content Layout ===== */
+.main-content {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Pots Panel ===== */
+.pots-panel {
+    background-color: var(--color-background);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pots-panel h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.current-pot-indicator {
+    background-color: var(--color-surface);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    border: 2px solid var(--color-accent);
+}
+
+#current-pot-text {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+/* ===== Pot ===== */
+.pot {
+    margin-bottom: var(--spacing-lg);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.pot.active {
+    border-color: var(--color-accent);
+    border-width: 2px;
+}
+
+.pot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background-color: var(--color-surface);
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.pot-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.pot-status {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+    font-weight: 500;
+}
+
+.pot-teams {
+    padding: var(--spacing-sm);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ===== Team Item (in pot) ===== */
+.team-item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: var(--border-width) solid transparent;
+}
+
+.team-item:hover:not(.assigned):not(.disabled) {
+    background-color: var(--color-hover);
+    border-color: var(--color-accent);
+}
+
+.team-item.assigned {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: var(--color-surface);
+}
+
+.team-item.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.team-item.clickable {
+    border-color: var(--color-accent);
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+.team-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+    margin-right: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+}
+
+/* Special styling for logo-style flags (FIFA, UEFA) */
+.team-flag[src*="fifa.svg"] {
+    object-fit: contain;
+    padding: 2px;
+    background-color: white;
+}
+
+.team-flag[src*="uefa.svg"] {
+    object-fit: cover;
+    padding: 0;
+    background-color: transparent;
+}
+
+.team-name {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    flex: 1;
+}
+
+/* ===== Action Buttons ===== */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+}
+
+.action-buttons .btn {
+    width: 100%;
+}
+
+/* ===== Draw Status ===== */
+.draw-status {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-surface);
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--color-accent);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+}
+
+/* ===== Groups Panel ===== */
+.groups-panel {
+    background-color: var(--color-background);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.groups-panel h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+/* ===== Groups Grid (3x4) ===== */
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 1400px) {
+    .groups-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .groups-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .groups-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Group ===== */
+.group {
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.group.valid {
+    border-color: var(--color-success);
+    border-width: 2px;
+    box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.1);
+}
+
+.group.invalid {
+    opacity: 0.5;
+}
+
+.group.clickable {
+    cursor: pointer;
+}
+
+.group.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.group-header {
+    background-color: var(--color-primary);
+    color: white;
+    padding: var(--spacing-md);
+    font-weight: 600;
+    text-align: center;
+    font-size: var(--font-size-base);
+}
+
+.group-teams {
+    padding: var(--spacing-sm);
+    background-color: var(--color-background);
+}
+
+/* ===== Team Slot (in group) ===== */
+.team-slot {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: var(--border-radius);
+    background-color: var(--color-surface);
+    border: var(--border-width) dashed var(--color-border);
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.team-slot:last-child {
+    margin-bottom: 0;
+}
+
+.team-slot.filled {
+    background-color: white;
+    border-style: solid;
+    border-color: var(--color-border);
+}
+
+.team-slot.host {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-color: var(--color-accent);
+    border-width: 2px;
+}
+
+.team-slot-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.team-slot-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+    margin-right: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+}
+
+/* Special styling for logo-style flags (FIFA, UEFA) in groups */
+.team-slot-flag[src*="fifa.svg"] {
+    object-fit: contain;
+    padding: 2px;
+    background-color: white;
+}
+
+.team-slot-flag[src*="uefa.svg"] {
+    object-fit: cover;
+    padding: 0;
+    background-color: transparent;
+}
+
+.team-slot-name {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+/* ===== Assignment Log ===== */
+.assignment-log-inline {
+    margin-top: var(--spacing-xl);
+}
+
+.assignment-log-inline h3 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.assignment-log-content {
+    background-color: var(--color-background);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.assignment-log-entry {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: var(--border-radius);
+    background-color: var(--color-surface);
+    font-size: var(--font-size-sm);
+}
+
+.assignment-log-entry:last-child {
+    margin-bottom: 0;
+}
+
+.assignment-log-entry.host {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left: 3px solid var(--color-accent);
+}
+
+.assignment-log-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+    margin-right: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+}
+
+.assignment-log-flag[src*="fifa.svg"] {
+    object-fit: contain;
+    padding: 2px;
+    background-color: white;
+}
+
+.assignment-log-flag[src*="uefa.svg"] {
+    object-fit: cover;
+    padding: 0;
+}
+
+.assignment-log-arrow {
+    margin: 0 var(--spacing-sm);
+    color: var(--color-text-light);
+    font-weight: bold;
+}
+
+.assignment-log-group {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.github-link {
+    margin-top: var(--spacing-md);
+    text-align: center;
+    padding-top: var(--spacing-md);
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.github-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-light);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    transition: color 0.2s ease;
+}
+
+.github-link a:hover {
+    color: var(--color-primary);
+}
+
+.github-link svg {
+    vertical-align: middle;
+}
+
+.credits {
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+    font-style: italic;
+}
+
+/* ===== Footer ===== */
+.footer {
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+}
+
+/* ===== Scrollbar Styling ===== */
+.pot-teams::-webkit-scrollbar {
+    width: 6px;
+}
+
+.pot-teams::-webkit-scrollbar-track {
+    background: var(--color-surface);
+}
+
+.pot-teams::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.pot-teams::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+}
+
+/* ===== Utility Classes ===== */
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-success {
+    color: var(--color-success);
+}
+
+.text-error {
+    color: var(--color-error);
+}
+
+.text-muted {
+    color: var(--color-text-light);
+}
