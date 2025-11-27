@@ -305,17 +305,11 @@ body {
     border: 1px solid var(--color-border);
 }
 
-/* Special styling for logo-style flags (FIFA, UEFA) */
+/* Special styling for logo-style flags (FIFA) */
 .team-flag[src*="fifa.svg"] {
     object-fit: contain;
     padding: 2px;
     background-color: white;
-}
-
-.team-flag[src*="uefa.svg"] {
-    object-fit: cover;
-    padding: 0;
-    background-color: transparent;
 }
 
 .team-name {
@@ -473,17 +467,11 @@ body {
     border: 1px solid var(--color-border);
 }
 
-/* Special styling for logo-style flags (FIFA, UEFA) in groups */
+/* Special styling for logo-style flags (FIFA) in groups */
 .team-slot-flag[src*="fifa.svg"] {
     object-fit: contain;
     padding: 2px;
     background-color: white;
-}
-
-.team-slot-flag[src*="uefa.svg"] {
-    object-fit: cover;
-    padding: 0;
-    background-color: transparent;
 }
 
 .team-slot-name {
@@ -547,11 +535,6 @@ body {
     object-fit: contain;
     padding: 2px;
     background-color: white;
-}
-
-.assignment-log-flag[src*="uefa.svg"] {
-    object-fit: cover;
-    padding: 0;
 }
 
 .assignment-log-arrow {
