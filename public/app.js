@@ -329,12 +329,17 @@ function clearAssignmentLog() {
 
 // ===== Draw One Random Team =====
 async function drawOneTeam() {
+    if (drawState.isDrawing) return;
+
     const currentPot = getCurrentPot(drawState.assignments);
     if (currentPot === 0) {
         updateDrawStatus("Draw complete!");
         return;
     }
 
+    drawState.isDrawing = true;
+    document.getElementById('draw-one-btn').disabled = true;
+    document.getElementById('run-all-btn').disabled = true;
     updateDrawStatus("Drawing one team...");
 
     try {
@@ -361,6 +366,10 @@ async function drawOneTeam() {
     } catch (error) {
         console.error("Error drawing team:", error);
         updateDrawStatus("Error during draw");
+    } finally {
+        drawState.isDrawing = false;
+        document.getElementById('draw-one-btn').disabled = false;
+        document.getElementById('run-all-btn').disabled = false;
     }
 }
 
