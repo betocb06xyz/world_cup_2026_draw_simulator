@@ -155,7 +155,7 @@ function createTeamItem(teamCode, teamData) {
 
     const name = document.createElement('span');
     name.className = 'team-name';
-    name.textContent = teamData.name;
+    name.textContent = teamData.displayName || teamData.name;
 
     div.appendChild(flag);
     div.appendChild(name);
