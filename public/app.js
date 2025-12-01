@@ -19,6 +19,7 @@ let drawState = {
     assignments: {},
     currentPot: 1,
     selectedTeam: null,
+    validGroups: [],      // Valid groups for selected team
     isDrawing: false
 };
 
@@ -159,7 +160,10 @@ function createTeamItem(teamCode, teamData) {
     div.appendChild(flag);
     div.appendChild(name);
 
-    div.addEventListener('click', () => handleTeamClick(teamCode));
+    div.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleTeamClick(teamCode);
+    });
 
     return div;
 }
@@ -256,6 +260,19 @@ async function handleTeamClick(teamCode) {
         return;
     }
 
+    // If clicking the same team again while it's selected, confirm the assignment
+    if (drawState.selectedTeam === teamCode && drawState.validGroups.length > 0) {
+        const group = drawState.validGroups[0];
+        clearHighlights();
+        assignTeamToGroup(teamCode, group);
+        return;
+    }
+
+    // If a different team is selected, clear previous selection first
+    if (drawState.selectedTeam && drawState.selectedTeam !== teamCode) {
+        clearHighlights();
+    }
+
     drawState.isDrawing = true;
     updateDrawStatus(`Checking valid groups for ${teamData.name}...`);
 
@@ -268,11 +285,20 @@ async function handleTeamClick(teamCode) {
             return;
         }
 
-        // Pick lowest valid group
+        // Sort and store valid groups
         validGroups.sort((a, b) => a - b);
-        const group = validGroups[0];
+        drawState.selectedTeam = teamCode;
+        drawState.validGroups = validGroups;
 
-        assignTeamToGroup(teamCode, group);
+        // Highlight the team as selected
+        highlightSelectedTeam(teamCode);
+
+        // Highlight valid group(s) and the specific slot
+        highlightValidGroups(validGroups, teamData.pot);
+
+        const groupLetter = GROUP_LETTERS[validGroups[0] - 1];
+        updateDrawStatus(`${teamData.name} → Group ${groupLetter}. Click team or group to confirm.`);
+
     } catch (error) {
         console.error('Error in team click:', error);
         updateDrawStatus('Error checking constraints. Please try again.');
@@ -281,10 +307,108 @@ async function handleTeamClick(teamCode) {
     drawState.isDrawing = false;
 }
 
+// ===== Highlight Functions =====
+function highlightSelectedTeam(teamCode) {
+    // Remove previous selection
+    document.querySelectorAll('.team-item.selected').forEach(el => {
+        el.classList.remove('selected');
+    });
+
+    // Add selection to current team
+    const teamItem = document.querySelector(`.team-item[data-team="${teamCode}"]`);
+    if (teamItem) {
+        teamItem.classList.add('selected');
+    }
+}
+
+function highlightValidGroups(validGroups, pot) {
+    // Clear previous highlights
+    document.querySelectorAll('.group').forEach(g => {
+        g.classList.remove('highlight', 'dimmed');
+    });
+    document.querySelectorAll('.team-slot').forEach(s => {
+        s.classList.remove('highlight-slot');
+    });
+
+    // Only proceed if we have valid groups
+    if (!validGroups || validGroups.length === 0) {
+        return;
+    }
+
+    // Dim all groups first, then highlight the valid one
+    document.querySelectorAll('.group').forEach(g => {
+        g.classList.add('dimmed');
+    });
+
+    // There's only one valid group
+    const group = validGroups[0];
+    const groupElement = document.getElementById(`group-${group}`);
+    if (groupElement) {
+        groupElement.classList.remove('dimmed');
+        groupElement.classList.add('highlight');
+
+        // Highlight the specific slot based on pot and group display order
+        const slots = groupElement.querySelectorAll('.team-slot');
+        const ORDER_1324 = {1: 0, 3: 1, 2: 2, 4: 3};
+        const ORDER_1432 = {1: 0, 4: 1, 3: 2, 2: 3};
+        const ORDER_1243 = {1: 0, 2: 1, 4: 2, 3: 3};
+
+        let slotIndex = pot - 1;
+        if ([1, 4, 7, 10].includes(group)) slotIndex = ORDER_1324[pot];
+        else if ([2, 5, 8, 11].includes(group)) slotIndex = ORDER_1432[pot];
+        else if ([3, 6, 9, 12].includes(group)) slotIndex = ORDER_1243[pot];
+
+        if (slots[slotIndex]) {
+            slots[slotIndex].classList.add('highlight-slot');
+        }
+    }
+}
+
+function clearHighlights() {
+    drawState.selectedTeam = null;
+    drawState.validGroups = [];
+
+    document.querySelectorAll('.team-item.selected').forEach(el => {
+        el.classList.remove('selected');
+    });
+    document.querySelectorAll('.group').forEach(g => {
+        g.classList.remove('highlight', 'dimmed');
+    });
+    document.querySelectorAll('.team-slot').forEach(s => {
+        s.classList.remove('highlight-slot');
+    });
+}
+
+// ===== Group Click Handler =====
+function handleGroupClick(group, event) {
+    event.stopPropagation();  // Prevent document click from cancelling
+
+    // Only act if a team is selected AND this is the valid group
+    if (!drawState.selectedTeam) {
+        return;
+    }
+
+    // Ignore clicks on non-valid groups (ensure integer comparison)
+    const validGroup = drawState.validGroups[0];
+    if (validGroup !== group) {
+        return;
+    }
+
+    const teamCode = drawState.selectedTeam;
+    clearHighlights();
+    assignTeamToGroup(teamCode, group);
+}
+
 // ===== Assign Team to Group =====
 function assignTeamToGroup(teamCode, group) {
     drawState.assignments[teamCode] = group;
     drawState.selectedTeam = null;
+    drawState.validGroups = [];
+
+    // Clear any remaining highlights
+    document.querySelectorAll('.team-item.selected').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.group').forEach(g => g.classList.remove('highlight', 'dimmed'));
+    document.querySelectorAll('.team-slot').forEach(s => s.classList.remove('highlight-slot'));
 
     updateGroupsDisplay();
     updateCurrentPot();
@@ -447,8 +571,24 @@ async function resetDraw() {
 // ===== Event Listeners =====
 function setupEventListeners() {
     document.getElementById('reset-btn').addEventListener('click', resetDraw);
-    document.getElementById('draw-one-btn').addEventListener('click', drawOneTeam);
+    document.getElementById('draw-one-btn').addEventListener('click', () => drawOneTeam());
     document.getElementById('run-all-btn').addEventListener('click', runFullDraw);
+
+    // Add click listeners to groups for two-click confirmation
+    for (let group = 1; group <= 12; group++) {
+        const groupElement = document.getElementById(`group-${group}`);
+        groupElement.addEventListener('click', (e) => handleGroupClick(group, e));
+    }
+
+    // Cancel selection when clicking outside
+    document.addEventListener('click', (e) => {
+        if (drawState.selectedTeam &&
+            !e.target.closest('.team-item') &&
+            !e.target.closest('.group')) {
+            clearHighlights();
+            updateDrawStatus('Selection cancelled.');
+        }
+    });
 }
 
 // ===== Start Application =====
