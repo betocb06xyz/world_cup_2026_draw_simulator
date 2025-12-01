@@ -198,28 +198,57 @@ function createTeamItem(teamCode, teamData) {
 
 // ===== Groups Display =====
 function updateGroupsDisplay() {
+    // Display order mappings (pot -> slot index)
+    const ORDER_1324 = {1: 0, 3: 1, 2: 2, 4: 3};  // 1, 3, 2, 4 (A, D, G, J)
+    const ORDER_1432 = {1: 0, 4: 1, 3: 2, 2: 3};  // 1, 4, 3, 2 (B, E, H, K)
+    const ORDER_1243 = {1: 0, 2: 1, 4: 2, 3: 3};  // 1, 2, 4, 3 (C, F, I, L)
+
+    // Reverse mappings (slot index -> pot number)
+    const SLOT_TO_POT_1324 = {0: 1, 1: 3, 2: 2, 3: 4};
+    const SLOT_TO_POT_1432 = {0: 1, 1: 4, 2: 3, 3: 2};
+    const SLOT_TO_POT_1243 = {0: 1, 1: 2, 2: 4, 3: 3};
+
     for (let group = 1; group <= 12; group++) {
         const groupElement = document.getElementById(`group-${group}`);
         const slots = groupElement.querySelectorAll('.team-slot');
 
-        slots.forEach(slot => {
+        // Determine which order this group uses
+        let slotToPot;
+        let potToSlot;
+        if ([1, 4, 7, 10].includes(group)) {
+            slotToPot = SLOT_TO_POT_1324;
+            potToSlot = ORDER_1324;
+        } else if ([2, 5, 8, 11].includes(group)) {
+            slotToPot = SLOT_TO_POT_1432;
+            potToSlot = ORDER_1432;
+        } else {
+            slotToPot = SLOT_TO_POT_1243;
+            potToSlot = ORDER_1243;
+        }
+
+        // Clear slots and show pot numbers for empty ones
+        slots.forEach((slot, index) => {
             slot.innerHTML = '';
             slot.classList.remove('filled', 'host');
+
+            // Add pot number placeholder
+            const potNum = slotToPot[index];
+            const placeholder = document.createElement('span');
+            placeholder.className = 'slot-pot-number';
+            placeholder.textContent = potNum;
+            slot.appendChild(placeholder);
         });
 
+        // Fill in assigned teams (overwrites pot number)
         for (const [teamCode, assignedGroup] of Object.entries(drawState.assignments)) {
             if (assignedGroup === group) {
                 const teamData = TEAM_DATA[teamCode];
                 const pot = teamData.pot;
-                // Special display orders for groups
-                const ORDER_1324 = {1: 0, 3: 1, 2: 2, 4: 3};  // 1, 3, 2, 4 (A, D, G, J)
-                const ORDER_1432 = {1: 0, 4: 1, 3: 2, 2: 3};  // 1, 4, 3, 2 (B)
-                const ORDER_1243 = {1: 0, 2: 1, 4: 2, 3: 3};  // 1, 2, 4, 3 (C)
-                let slotIndex = pot - 1;
-                if ([1, 4, 7, 10].includes(group)) slotIndex = ORDER_1324[pot];  // A, D, G, J
-                else if ([2, 5, 8, 11].includes(group)) slotIndex = ORDER_1432[pot];  // B, E, H, K
-                else if ([3, 6, 9, 12].includes(group)) slotIndex = ORDER_1243[pot];  // C, F, I, L
+                const slotIndex = potToSlot[pot];
                 const slot = slots[slotIndex];
+
+                // Clear the pot number placeholder
+                slot.innerHTML = '';
 
                 const content = document.createElement('div');
                 content.className = 'team-slot-content';
