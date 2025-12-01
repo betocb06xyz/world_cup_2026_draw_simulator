@@ -21,9 +21,9 @@ const TEAM_DATA = {
   "CF": { name: "Paraguay", confederation: "CONMEBOL", flag: "py", pot: 3 },
 
   // ========== UEFA (16 teams) ==========
-  "EA": { name: "England", confederation: "UEFA", flag: "gb-eng", pot: 1 },
+  "EA": { name: "Spain", confederation: "UEFA", flag: "es", pot: 1 },
   "EB": { name: "France", confederation: "UEFA", flag: "fr", pot: 1 },
-  "EC": { name: "Spain", confederation: "UEFA", flag: "es", pot: 1 },
+  "EC": { name: "England", confederation: "UEFA", flag: "gb-eng", pot: 1 },
   "ED": { name: "Germany", confederation: "UEFA", flag: "de", pot: 1 },
   "EE": { name: "Portugal", confederation: "UEFA", flag: "pt", pot: 1 },
   "EF": { name: "Netherlands", confederation: "UEFA", flag: "nl", pot: 1 },
