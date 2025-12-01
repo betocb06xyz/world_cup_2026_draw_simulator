@@ -33,10 +33,10 @@ const TEAM_DATA = {
   "EJ": { name: "Switzerland", displayName: "Switzerland - UEFA", confederation: "UEFA", flag: "ch", pot: 2 },
   "EK": { name: "Norway", displayName: "Norway - UEFA", confederation: "UEFA", flag: "no", pot: 3 },
   "EL": { name: "Scotland", displayName: "Scotland - UEFA", confederation: "UEFA", flag: "gb-sct", pot: 3 },
-  "EM": { name: "UEFA 1", displayName: "UEFA 1: Italy/Wales/N.Ireland/Bosnia", fullName: "Italy / Wales / Northern Ireland / Bosnia-Herzegovina", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
-  "EN": { name: "UEFA 2", displayName: "UEFA 2: Ukraine/Poland/Sweden/Albania", fullName: "Ukraine / Poland / Sweden / Albania", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
-  "EO": { name: "UEFA 3", displayName: "UEFA 3: Turkey/Romania/Slovakia/Kosovo", fullName: "Turkey / Romania / Slovakia / Kosovo", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
-  "EP": { name: "UEFA 4", displayName: "UEFA 4: Denmark/Czechia/N.Macedonia/Ireland", fullName: "Denmark / Czech Republic / North Macedonia / Ireland", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EM": { name: "UEFA 1", displayName: "UEFA 1: ITA/WAL/NIR/BIH", fullName: "Italy / Wales / Northern Ireland / Bosnia-Herzegovina", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EN": { name: "UEFA 2", displayName: "UEFA 2: UKR/POL/SWE/ALB", fullName: "Ukraine / Poland / Sweden / Albania", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EO": { name: "UEFA 3", displayName: "UEFA 3: TUR/ROU/SVK/KOS", fullName: "Turkey / Romania / Slovakia / Kosovo", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EP": { name: "UEFA 4", displayName: "UEFA 4: DEN/CZE/MKD/IRL", fullName: "Denmark / Czech Republic / North Macedonia / Ireland", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
 
   // ========== CAF (9 teams) ==========
   "FA": { name: "Senegal", displayName: "Senegal - CAF", confederation: "CAF", flag: "sn", pot: 2 },
@@ -66,7 +66,7 @@ const TEAM_DATA = {
   // Pathway 1: CAF vs CONCACAF vs OFC
   "YA": {
     name: "FIFA 1",
-    displayName: "FIFA 1: DR Congo/Jamaica/New Caledonia",
+    displayName: "FIFA 1: COD/JAM/NCL",
     fullName: "DR Congo / Jamaica / New Caledonia",
     confederation: "PLAYOFF",
     flag: "fifa",
@@ -77,7 +77,7 @@ const TEAM_DATA = {
   // Pathway 2: AFC vs CONMEBOL vs CONCACAF
   "ZA": {
     name: "FIFA 2",
-    displayName: "FIFA 2: Iraq/Bolivia/Suriname",
+    displayName: "FIFA 2: IRQ/BOL/SUR",
     fullName: "Iraq / Bolivia / Suriname",
     confederation: "PLAYOFF",
     flag: "fifa",
