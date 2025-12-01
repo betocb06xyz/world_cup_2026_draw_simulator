@@ -78,7 +78,11 @@ class LocalHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    PORT = 3000
+    import argparse
+    parser = argparse.ArgumentParser(description='Local dev server for FIFA 2026 Draw Simulator')
+    parser.add_argument('-p', '--port', type=int, default=3000, help='Port to run server on (default: 3000)')
+    args = parser.parse_args()
+    PORT = args.port
 
     print(f"""
 ╔════════════════════════════════════════════════════════════╗

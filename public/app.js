@@ -4,9 +4,15 @@
  */
 
 // API endpoint - will be '/api/solver' in production, can be overridden for local dev
-const API_ENDPOINT = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000/api/solver'  // Local dev
-    : '/api/solver';  // Production
+// In localhost, uses the same port the page is served from (or ?port=XXXX to override)
+const API_ENDPOINT = (() => {
+    if (window.location.hostname !== 'localhost') {
+        return '/api/solver';  // Production
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const port = urlParams.get('port') || window.location.port || '3000';
+    return `http://localhost:${port}/api/solver`;
+})();
 
 // ===== Global State =====
 let drawState = {

@@ -8,17 +8,17 @@ const TEAM_DATA = {
   "NA": { name: "Mexico", confederation: "CONCACAF", flag: "mx", pot: 1, host: true },
   "NB": { name: "Canada", confederation: "CONCACAF", flag: "ca", pot: 1, host: true },
   "NC": { name: "USA", confederation: "CONCACAF", flag: "us", pot: 1, host: true },
-  "ND": { name: "Costa Rica", confederation: "CONCACAF", flag: "cr", pot: 3 },
-  "NE": { name: "Jamaica", confederation: "CONCACAF", flag: "jm", pot: 4 },
-  "NF": { name: "Panama", confederation: "CONCACAF", flag: "pa", pot: 4 },
+  "ND": { name: "Panama", confederation: "CONCACAF", flag: "pa", pot: 3 },
+  "NE": { name: "Curacao", confederation: "CONCACAF", flag: "cw", pot: 4 },
+  "NF": { name: "Haiti", confederation: "CONCACAF", flag: "ht", pot: 4 },
 
   // ========== CONMEBOL (6 teams) ==========
   "CA": { name: "Argentina", confederation: "CONMEBOL", flag: "ar", pot: 1 },
   "CB": { name: "Brazil", confederation: "CONMEBOL", flag: "br", pot: 1 },
   "CC": { name: "Uruguay", confederation: "CONMEBOL", flag: "uy", pot: 2 },
   "CD": { name: "Colombia", confederation: "CONMEBOL", flag: "co", pot: 2 },
-  "CE": { name: "Chile", confederation: "CONMEBOL", flag: "cl", pot: 2 },
-  "CF": { name: "Ecuador", confederation: "CONMEBOL", flag: "ec", pot: 3 },
+  "CE": { name: "Ecuador", confederation: "CONMEBOL", flag: "ec", pot: 2 },
+  "CF": { name: "Paraguay", confederation: "CONMEBOL", flag: "py", pot: 3 },
 
   // ========== UEFA (16 teams) ==========
   "EA": { name: "England", confederation: "UEFA", flag: "gb-eng", pot: 1 },
@@ -27,27 +27,27 @@ const TEAM_DATA = {
   "ED": { name: "Germany", confederation: "UEFA", flag: "de", pot: 1 },
   "EE": { name: "Portugal", confederation: "UEFA", flag: "pt", pot: 1 },
   "EF": { name: "Netherlands", confederation: "UEFA", flag: "nl", pot: 1 },
-  "EG": { name: "Italy", confederation: "UEFA", flag: "it", pot: 1 },
-  "EH": { name: "Belgium", confederation: "UEFA", flag: "be", pot: 2 },
+  "EG": { name: "Belgium", confederation: "UEFA", flag: "be", pot: 1 },
+  "EH": { name: "Austria", confederation: "UEFA", flag: "at", pot: 2 },
   "EI": { name: "Croatia", confederation: "UEFA", flag: "hr", pot: 2 },
-  "EJ": { name: "Denmark", confederation: "UEFA", flag: "dk", pot: 2 },
-  "EK": { name: "Switzerland", confederation: "UEFA", flag: "ch", pot: 3 },
-  "EL": { name: "Austria", confederation: "UEFA", flag: "at", pot: 3 },
-  "EM": { name: "POL/WAL/GRE/AUT", fullName: "Poland / Wales / Greece / Austria", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
-  "EN": { name: "SRB/SCO/SUI/SVK", fullName: "Serbia / Scotland / Switzerland / Slovakia", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
-  "EO": { name: "UKR/TUR/CZE/ISL", fullName: "Ukraine / Turkey / Czech Republic / Iceland", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
-  "EP": { name: "SWE/NOR/FIN/BUL", fullName: "Sweden / Norway / Finland / Bulgaria", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EJ": { name: "Switzerland", confederation: "UEFA", flag: "ch", pot: 2 },
+  "EK": { name: "Norway", confederation: "UEFA", flag: "no", pot: 3 },
+  "EL": { name: "Scotland", confederation: "UEFA", flag: "gb-sct", pot: 3 },
+  "EM": { name: "ITA/NIR/WAL/BHA", fullName: "Italy / Northern Ireland / Wales / Bosnia-Herzegovina", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EN": { name: "UKR/SWE/POL/ALB", fullName: "Ukraine / Sweden / Poland / Albania", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EO": { name: "TUR/ROU/SVK/KOS", fullName: "Turkey / Romania / Slovakia / Kosovo", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
+  "EP": { name: "DEN/MKD/CZE/IRL", fullName: "Denmark / North Macedonia / Czech Republic / Ireland", confederation: "UEFA", flag: "uefa", pot: 4, playoff: true },
 
   // ========== CAF (9 teams) ==========
   "FA": { name: "Senegal", confederation: "CAF", flag: "sn", pot: 2 },
   "FB": { name: "Morocco", confederation: "CAF", flag: "ma", pot: 2 },
   "FC": { name: "Tunisia", confederation: "CAF", flag: "tn", pot: 3 },
-  "FD": { name: "Nigeria", confederation: "CAF", flag: "ng", pot: 3 },
-  "FE": { name: "Cameroon", confederation: "CAF", flag: "cm", pot: 3 },
+  "FD": { name: "Ivory Coast", confederation: "CAF", flag: "ci", pot: 3 },
+  "FE": { name: "South Africa", confederation: "CAF", flag: "za", pot: 3 },
   "FF": { name: "Egypt", confederation: "CAF", flag: "eg", pot: 3 },
   "FG": { name: "Algeria", confederation: "CAF", flag: "dz", pot: 3 },
   "FH": { name: "Ghana", confederation: "CAF", flag: "gh", pot: 4 },
-  "FI": { name: "Mali", confederation: "CAF", flag: "ml", pot: 4 },
+  "FI": { name: "Cape Verde", confederation: "CAF", flag: "cv", pot: 4 },
 
   // ========== AFC (8 teams) ==========
   "AA": { name: "Japan", confederation: "AFC", flag: "jp", pot: 2 },
@@ -56,27 +56,27 @@ const TEAM_DATA = {
   "AD": { name: "Australia", confederation: "AFC", flag: "au", pot: 2 },
   "AE": { name: "Saudi Arabia", confederation: "AFC", flag: "sa", pot: 3 },
   "AF": { name: "Qatar", confederation: "AFC", flag: "qa", pot: 3 },
-  "AG": { name: "UAE", confederation: "AFC", flag: "ae", pot: 3 },
-  "AH": { name: "Iraq", confederation: "AFC", flag: "iq", pot: 4 },
+  "AG": { name: "Uzbekistan", confederation: "AFC", flag: "uz", pot: 3 },
+  "AH": { name: "Jordan", confederation: "AFC", flag: "jo", pot: 4 },
 
   // ========== OFC (1 team) ==========
   "XA": { name: "New Zealand", confederation: "OFC", flag: "nz", pot: 4 },
 
   // ========== PLAYOFF TEAMS ==========
-  // Pathway 1: CONCACAF vs CAF vs OFC
+  // Pathway 1: CAF vs CONCACAF vs OFC
   "YA": {
-    name: "JAM/CGO/CAL",
-    fullName: "Jamaica / DR Congo / New Caledonia",
+    name: "RDC/JAM/CAL",
+    fullName: "DR Congo / Jamaica / New Caledonia",
     confederation: "PLAYOFF",
     flag: "fifa",
     pot: 4,
     playoff: true
   },
 
-  // Pathway 2: CONMEBOL vs CONCACAF vs AFC
+  // Pathway 2: AFC vs CONMEBOL vs CONCACAF
   "ZA": {
-    name: "BOL/SUR/IRQ",
-    fullName: "Bolivia / Suriname / Iraq",
+    name: "IRQ/BOL/SUR",
+    fullName: "Iraq / Bolivia / Suriname",
     confederation: "PLAYOFF",
     flag: "fifa",
     pot: 4,
