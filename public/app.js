@@ -19,8 +19,36 @@ let drawState = {
     assignments: {},
     currentPot: 1,
     selectedTeam: null,
-    validGroups: [],      // Valid groups for selected team
-    isDrawing: false
+    validGroup: null       // Valid group for selected team
+};
+
+// ===== Action Queue (prevents race conditions) =====
+const actionQueue = {
+    queue: [],
+    processing: false,
+
+    enqueue(action) {
+        this.queue.push(action);
+        this.processNext();
+    },
+
+    async processNext() {
+        if (this.processing || this.queue.length === 0) {
+            return;
+        }
+
+        this.processing = true;
+        const action = this.queue.shift();
+
+        try {
+            await action();
+        } catch (error) {
+            console.error('Action failed:', error);
+        }
+
+        this.processing = false;
+        this.processNext();
+    }
 };
 
 // ===== API Calls =====
@@ -49,9 +77,9 @@ async function callAPI(action, data = {}) {
     }
 }
 
-async function getValidGroupsForTeam(teamCode) {
-    const result = await callAPI('get_valid_groups', { team: teamCode });
-    return result.valid_groups;
+async function getValidGroupForTeam(teamCode) {
+    const result = await callAPI('get_valid_group', { team: teamCode });
+    return result.valid_group;
 }
 
 async function getInitialState() {
@@ -251,60 +279,68 @@ function updatePotStatus() {
 }
 
 // ===== Team Click Handler =====
-async function handleTeamClick(teamCode) {
-    if (drawState.isDrawing) return;
+function handleTeamClick(teamCode) {
+    actionQueue.enqueue(() => processTeamClick(teamCode));
+}
 
+async function processTeamClick(teamCode) {
     const teamData = TEAM_DATA[teamCode];
 
+    // Skip if team already assigned or not in current pot
     if (teamData.pot !== drawState.currentPot || teamCode in drawState.assignments) {
         return;
     }
 
-    // If clicking the same team again while it's selected, confirm the assignment
-    if (drawState.selectedTeam === teamCode && drawState.validGroups.length > 0) {
-        const group = drawState.validGroups[0];
-        clearHighlights();
-        assignTeamToGroup(teamCode, group);
+    // If clicking the same team again while it's selected with a valid group, confirm immediately
+    if (drawState.selectedTeam === teamCode) {
+        if (drawState.validGroup !== null) {
+            const group = drawState.validGroup;  // Save before clearHighlights resets it
+            clearHighlights();
+            assignTeamToGroup(teamCode, group);
+        }
+        // If validGroup is null, we're still fetching - just ignore the duplicate click
         return;
     }
 
     // If a different team is selected, clear previous selection first
-    if (drawState.selectedTeam && drawState.selectedTeam !== teamCode) {
+    if (drawState.selectedTeam) {
         clearHighlights();
     }
 
-    drawState.isDrawing = true;
-    updateDrawStatus(`Checking valid groups for ${teamData.name}...`);
+    // Mark this team as selected (validGroup will be set after API call)
+    drawState.selectedTeam = teamCode;
+    drawState.validGroup = null;
+
+    updateDrawStatus(`Checking valid group for ${teamData.name}...`);
+    highlightSelectedTeam(teamCode);
 
     try {
-        const validGroups = await getValidGroupsForTeam(teamCode);
+        const validGroup = await getValidGroupForTeam(teamCode);
 
-        if (validGroups.length === 0) {
-            updateDrawStatus(`ERROR: No valid groups for ${teamData.name}`);
-            drawState.isDrawing = false;
+        // Check if user switched to a different team while we were fetching
+        if (drawState.selectedTeam !== teamCode) {
             return;
         }
 
-        // Sort and store valid groups
-        validGroups.sort((a, b) => a - b);
-        drawState.selectedTeam = teamCode;
-        drawState.validGroups = validGroups;
+        if (validGroup === null) {
+            updateDrawStatus(`ERROR: No valid group for ${teamData.name}`);
+            clearHighlights();
+            return;
+        }
 
-        // Highlight the team as selected
-        highlightSelectedTeam(teamCode);
+        drawState.validGroup = validGroup;
 
-        // Highlight valid group(s) and the specific slot
-        highlightValidGroups(validGroups, teamData.pot);
+        // Highlight valid group and the specific slot
+        highlightValidGroup(validGroup, teamData.pot);
 
-        const groupLetter = GROUP_LETTERS[validGroups[0] - 1];
+        const groupLetter = GROUP_LETTERS[validGroup - 1];
         updateDrawStatus(`${teamData.name} → Group ${groupLetter}. Click team or group to confirm.`);
 
     } catch (error) {
         console.error('Error in team click:', error);
         updateDrawStatus('Error checking constraints. Please try again.');
+        clearHighlights();
     }
-
-    drawState.isDrawing = false;
 }
 
 // ===== Highlight Functions =====
@@ -321,7 +357,7 @@ function highlightSelectedTeam(teamCode) {
     }
 }
 
-function highlightValidGroups(validGroups, pot) {
+function highlightValidGroup(group, pot) {
     // Clear previous highlights
     document.querySelectorAll('.group').forEach(g => {
         g.classList.remove('highlight', 'dimmed');
@@ -330,8 +366,7 @@ function highlightValidGroups(validGroups, pot) {
         s.classList.remove('highlight-slot');
     });
 
-    // Only proceed if we have valid groups
-    if (!validGroups || validGroups.length === 0) {
+    if (group === null) {
         return;
     }
 
@@ -340,8 +375,6 @@ function highlightValidGroups(validGroups, pot) {
         g.classList.add('dimmed');
     });
 
-    // There's only one valid group
-    const group = validGroups[0];
     const groupElement = document.getElementById(`group-${group}`);
     if (groupElement) {
         groupElement.classList.remove('dimmed');
@@ -366,7 +399,7 @@ function highlightValidGroups(validGroups, pot) {
 
 function clearHighlights() {
     drawState.selectedTeam = null;
-    drawState.validGroups = [];
+    drawState.validGroup = null;
 
     document.querySelectorAll('.team-item.selected').forEach(el => {
         el.classList.remove('selected');
@@ -384,26 +417,22 @@ function handleGroupClick(group, event) {
     event.stopPropagation();  // Prevent document click from cancelling
 
     // Only act if a team is selected AND this is the valid group
-    if (!drawState.selectedTeam) {
-        return;
-    }
-
-    // Ignore clicks on non-valid groups (ensure integer comparison)
-    const validGroup = drawState.validGroups[0];
-    if (validGroup !== group) {
+    if (!drawState.selectedTeam || drawState.validGroup !== group) {
         return;
     }
 
     const teamCode = drawState.selectedTeam;
-    clearHighlights();
-    assignTeamToGroup(teamCode, group);
+    actionQueue.enqueue(() => {
+        clearHighlights();
+        assignTeamToGroup(teamCode, group);
+    });
 }
 
 // ===== Assign Team to Group =====
 function assignTeamToGroup(teamCode, group) {
     drawState.assignments[teamCode] = group;
     drawState.selectedTeam = null;
-    drawState.validGroups = [];
+    drawState.validGroup = null;
 
     // Clear any remaining highlights
     document.querySelectorAll('.team-item.selected').forEach(el => el.classList.remove('selected'));
@@ -466,20 +495,17 @@ function clearAssignmentLog() {
 }
 
 // ===== Draw One Random Team =====
-async function drawOneTeam(calledFromFullDraw = false) {
-    if (!calledFromFullDraw && drawState.isDrawing) return;
+function drawOneTeam() {
+    actionQueue.enqueue(() => processDrawOneTeam());
+}
 
+async function processDrawOneTeam() {
     const currentPot = getCurrentPot(drawState.assignments);
     if (currentPot === 0) {
         updateDrawStatus("Draw complete!");
         return;
     }
 
-    if (!calledFromFullDraw) {
-        drawState.isDrawing = true;
-        document.getElementById('draw-one-btn').disabled = true;
-        document.getElementById('run-all-btn').disabled = true;
-    }
     updateDrawStatus("Drawing one team...");
 
     try {
@@ -492,37 +518,27 @@ async function drawOneTeam(calledFromFullDraw = false) {
         }
 
         const teamCode = unassigned[Math.floor(Math.random() * unassigned.length)];
-        const validGroups = await getValidGroupsForTeam(teamCode);
+        const validGroup = await getValidGroupForTeam(teamCode);
 
-        if (validGroups.length === 0) {
-            updateDrawStatus(`ERROR: No valid groups for ${TEAM_DATA[teamCode].name}`);
+        if (validGroup === null) {
+            updateDrawStatus(`ERROR: No valid group for ${TEAM_DATA[teamCode].name}`);
             return;
         }
 
-        // Pick lowest valid group number
-        const group = Math.min(...validGroups);
-        assignTeamToGroup(teamCode, group);
+        assignTeamToGroup(teamCode, validGroup);
 
     } catch (error) {
         console.error("Error drawing team:", error);
         updateDrawStatus("Error during draw");
-    } finally {
-        if (!calledFromFullDraw) {
-            drawState.isDrawing = false;
-            document.getElementById('draw-one-btn').disabled = false;
-            document.getElementById('run-all-btn').disabled = false;
-        }
     }
 }
 
 // ===== Run Full Draw =====
-async function runFullDraw() {
-    if (drawState.isDrawing) return;
+function runFullDraw() {
+    actionQueue.enqueue(() => processFullDraw());
+}
 
-    drawState.isDrawing = true;
-    document.getElementById('draw-one-btn').disabled = true;
-    document.getElementById('run-all-btn').disabled = true;
-
+async function processFullDraw() {
     updateDrawStatus("Running full draw...");
 
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -532,7 +548,7 @@ async function runFullDraw() {
         const maxIterations = 100;
 
         while (getCurrentPot(drawState.assignments) > 0 && iterations < maxIterations) {
-            await drawOneTeam(true);
+            await processDrawOneTeam();
             await delay(200);
             iterations++;
         }
@@ -546,10 +562,6 @@ async function runFullDraw() {
         console.error("Error in full draw:", error);
         updateDrawStatus("Error during full draw: " + error.message);
     }
-
-    document.getElementById('draw-one-btn').disabled = false;
-    document.getElementById('run-all-btn').disabled = false;
-    drawState.isDrawing = false;
 }
 
 // ===== Helper Functions =====
@@ -571,7 +583,7 @@ async function resetDraw() {
 // ===== Event Listeners =====
 function setupEventListeners() {
     document.getElementById('reset-btn').addEventListener('click', resetDraw);
-    document.getElementById('draw-one-btn').addEventListener('click', () => drawOneTeam());
+    document.getElementById('draw-one-btn').addEventListener('click', drawOneTeam);
     document.getElementById('run-all-btn').addEventListener('click', runFullDraw);
 
     // Add click listeners to groups for two-click confirmation

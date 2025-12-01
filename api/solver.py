@@ -163,9 +163,8 @@ def check_feasibility(fixed_assignments):
     return result == cp_model.OPTIMAL or result == cp_model.FEASIBLE
 
 
-def get_valid_groups_for_team(team, current_assignments):
-    """Get list of valid groups for a team"""
-    valid_groups = []
+def get_valid_group_for_team(team, current_assignments):
+    """Get the first valid group for a team (lowest-numbered)"""
 
     # Find team's pot
     team_pot = None
@@ -177,15 +176,15 @@ def get_valid_groups_for_team(team, current_assignments):
             break
 
     if team_pot is None:
-        return []
+        return None
 
-    # Find groups with team from this pot
+    # Find groups already occupied by a team from this pot
     groups_with_pot = set()
     for t, g in current_assignments.items():
         if t in pot_teams:
             groups_with_pot.add(g)
 
-    # Try each group
+    # Try each group in order, return first valid one
     for group in range(1, 13):
         if group in groups_with_pot:
             continue
@@ -194,9 +193,9 @@ def get_valid_groups_for_team(team, current_assignments):
         test_assignments[team] = group
 
         if check_feasibility(test_assignments):
-            valid_groups.append(group)
+            return group
 
-    return valid_groups
+    return None
 
 
 def get_initial_state():
@@ -239,11 +238,11 @@ class handler(BaseHTTPRequestHandler):
 
             response_data = {}
 
-            if action == 'get_valid_groups':
+            if action == 'get_valid_group':
                 team = data.get('team')
-                valid_groups = get_valid_groups_for_team(team, assignments)
+                valid_group = get_valid_group_for_team(team, assignments)
                 response_data = {
-                    'valid_groups': valid_groups,
+                    'valid_group': valid_group,
                     'team': team
                 }
 
