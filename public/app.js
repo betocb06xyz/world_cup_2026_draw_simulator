@@ -179,7 +179,15 @@ function updateGroupsDisplay() {
             if (assignedGroup === group) {
                 const teamData = TEAM_DATA[teamCode];
                 const pot = teamData.pot;
-                const slot = slots[pot - 1];
+                // Special display orders for groups
+                const ORDER_1324 = {1: 0, 3: 1, 2: 2, 4: 3};  // 1, 3, 2, 4 (A, D, G, J)
+                const ORDER_1432 = {1: 0, 4: 1, 3: 2, 2: 3};  // 1, 4, 3, 2 (B)
+                const ORDER_1243 = {1: 0, 2: 1, 4: 2, 3: 3};  // 1, 2, 4, 3 (C)
+                let slotIndex = pot - 1;
+                if ([1, 4, 7, 10].includes(group)) slotIndex = ORDER_1324[pot];  // A, D, G, J
+                else if ([2, 5, 8, 11].includes(group)) slotIndex = ORDER_1432[pot];  // B, E, H, K
+                else if ([3, 6, 9, 12].includes(group)) slotIndex = ORDER_1243[pot];  // C, F, I, L
+                const slot = slots[slotIndex];
 
                 const content = document.createElement('div');
                 content.className = 'team-slot-content';
