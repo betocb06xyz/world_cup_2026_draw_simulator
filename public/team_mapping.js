@@ -86,73 +86,13 @@ const TEAM_DATA = {
   }
 };
 
-// Confederation metadata
-const CONFEDERATION_INFO = {
-  "CONCACAF": { fullName: "North/Central America & Caribbean", maxPerGroup: 1 },
-  "CONMEBOL": { fullName: "South America", maxPerGroup: 1 },
-  "UEFA": { fullName: "Europe", maxPerGroup: 2 },
-  "CAF": { fullName: "Africa", maxPerGroup: 1 },
-  "AFC": { fullName: "Asia", maxPerGroup: 1 },
-  "OFC": { fullName: "Oceania", maxPerGroup: 1 },
-  "PLAYOFF": { fullName: "Intercontinental Playoff", maxPerGroup: 1 }
-};
-
-// Pot definitions (same as Python)
-const POTS = {
-  1: ["NA", "NB", "NC", "CA", "CB", "EA", "EB", "EC", "ED", "EE", "EF", "EG"],
-  2: ["CC", "CD", "CE", "EH", "EI", "EJ", "FA", "FB", "AA", "AB", "AC", "AD"],
-  3: ["ND", "CF", "EK", "EL", "FC", "FD", "FE", "FF", "FG", "AE", "AF", "AG"],
-  4: ["NE", "NF", "EM", "EN", "EO", "EP", "FH", "FI", "AH", "XA", "YA", "ZA"]
-};
-
-// Host pre-assignments
-const HOST_ASSIGNMENTS = {
-  "NA": 1,  // Mexico → Group A
-  "NB": 2,  // Canada → Group B
-  "NC": 4   // USA → Group D
-};
-
 // Group letters
 const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
-// Helper functions
-function getTeamName(code) {
-  return TEAM_DATA[code]?.name || code;
-}
-
-function getTeamFlag(code) {
-  return TEAM_DATA[code]?.flag || "fifa";
-}
-
-function getTeamConfederation(code) {
-  return TEAM_DATA[code]?.confederation || "UNKNOWN";
-}
-
-function getTeamPot(code) {
-  return TEAM_DATA[code]?.pot || 0;
-}
-
-function isPlayoffTeam(code) {
-  return TEAM_DATA[code]?.playoff === true;
-}
-
-function getTeamFullName(code) {
-  return TEAM_DATA[code]?.fullName || TEAM_DATA[code]?.name || code;
-}
-
-// Export for use in other modules
+// Export for use in other modules (Node.js)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     TEAM_DATA,
-    CONFEDERATION_INFO,
-    POTS,
-    HOST_ASSIGNMENTS,
-    GROUP_LETTERS,
-    getTeamName,
-    getTeamFlag,
-    getTeamConfederation,
-    getTeamPot,
-    isPlayoffTeam,
-    getTeamFullName
+    GROUP_LETTERS
   };
 }

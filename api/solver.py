@@ -1,10 +1,8 @@
 """
-FIFA 2026 World Cup Draw - Python API Endpoint (Vercel Serverless)
+FIFA 2026 World Cup Draw - Constraint Solver
 Handles constraint checking with OR-Tools CP-SAT solver
 """
 
-from http.server import BaseHTTPRequestHandler
-import json
 from ortools.sat.python import cp_model
 
 # =============================================================================
@@ -20,139 +18,135 @@ AFC = ["AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH"]
 OFC = ["XA"]
 PLAYOFF_Y = ["YA"]
 PLAYOFF_Z = ["ZA"]
-
 ALL_TEAMS = CONCACAF + CONMEBOL + UEFA + CAF + AFC + OFC + PLAYOFF_Y + PLAYOFF_Z
 
 POT1 = ["NA", "NB", "NC", "CA", "CB", "EA", "EB", "EC", "ED", "EE", "EF", "EG"]
 POT2 = ["CC", "CD", "CE", "EH", "EI", "EJ", "FA", "FB", "AA", "AB", "AC", "AD"]
 POT3 = ["ND", "CF", "EK", "EL", "FC", "FD", "FE", "FF", "FG", "AE", "AF", "AG"]
 POT4 = ["NE", "NF", "EM", "EN", "EO", "EP", "FH", "FI", "AH", "XA", "YA", "ZA"]
-
 ALL_POTS = [POT1, POT2, POT3, POT4]
 
+TOP_2_TEAMS = ["CA", "EA"] # Top 2 teams, each one must be in different 'half'
+HALVES = [
+    [1, 2, 3, 10, 11, 12], # Half 1: A, B, C, J, K, L
+    [4, 5, 6, 7, 8, 9] # Half 2: D, E, F, G, H, I
+]
+
+TOP_4_TEAMS = ["CA", "EA", "EB", "EC"] # Top 4 teams, each one must be in a different 'zone'
+ZONES = [
+    [1, 3, 12],   # Zone 1: A, C, L
+    [2, 10, 11],  # Zone 2: B, J, K
+    [4, 7, 8],    # Zone 3: D, G, H
+    [5, 6, 9],    # Zone 4: E, F, I
+]
+
 # =============================================================================
-# CP MODEL
+# CP MODEL HELPERS
+# =============================================================================
+
+def addSumOfBoolsInRangeFlag(model, bool_list, lb, ub, condition_name):
+    flag = model.NewBoolVar(condition_name)
+    model.Add(sum(bool_list) >= lb).OnlyEnforceIf(flag)
+    model.Add(sum(bool_list) <= ub).OnlyEnforceIf(flag.Not())
+    return flag
+
+def addListContainsTrueFlag(model, bool_list, condition_name):
+    flag = model.NewBoolVar(condition_name)
+    model.Add(sum(bool_list) >= 1).OnlyEnforceIf(flag)
+    model.Add(sum(bool_list) == 0).OnlyEnforceIf(flag.Not())
+    return flag
+
+def addIntEqValFlag(model, int_var, val, condition_name):
+    flag = model.NewBoolVar(condition_name)
+    model.Add(int_var == val).OnlyEnforceIf(flag)
+    model.Add(int_var != val).OnlyEnforceIf(flag.Not())
+    return flag
+
+def addTeamsInDifferentSubgroups(model, team_group, separated_teams, subgroups, condition_name):
+    assert len(separated_teams) == len(subgroups)
+    team_subgroup = {}
+    for team in separated_teams:
+        team_subgroup[team] = model.NewIntVar(0, len(separated_teams), f'{team}_{condition_name}')
+
+        for sg_idx, sg_groups in enumerate(subgroups):
+            in_sg_bools = []
+            for g in sg_groups:
+                flag = addIntEqValFlag(model, team_group[team], g, f'{team}_in_g{g}')
+                in_sg_bools.append(flag)
+
+            in_this_sg = addListContainsTrueFlag(model, in_sg_bools, f'{team}_in_{condition_name}{sg_idx}')
+            model.Add(team_subgroup[team] == sg_idx).OnlyEnforceIf(in_this_sg)
+
+    model.AddAllDifferent([team_subgroup[t] for t in separated_teams])
+
+def create_team_group_map(model):
+    team_group = {}
+    for team in ALL_TEAMS:
+        team_group[team] = model.NewIntVar(1, 12, team)
+
+    return team_group
+
+# =============================================================================
+# CONSTRAINTS
+# =============================================================================
+
+def addPotConstraints(model, team_group):
+    for pot in ALL_POTS:
+        model.AddAllDifferent([team_group[t] for t in pot])
+
+def addFederationConstraints(model, team_group):
+    # 1 team per group
+    for confederation in [CONCACAF, CONMEBOL, CAF, AFC, OFC]:
+        model.AddAllDifferent([team_group[t] for t in confederation])
+
+def addUEFAConstraints(model, team_group):
+    # UEFA: 1-2 teams per group
+    for g in range(1, 13):
+        uefa_in_g = []
+        for t in UEFA:
+            t_in_g = addIntEqValFlag(model, team_group[t], g, f'{t}_in_g{g}')
+            uefa_in_g.append(t_in_g)
+
+        addSumOfBoolsInRangeFlag(model, uefa_in_g, 1, 2, f'valid_uefa_in_g{g}')
+
+def addPlayoffConstraints(model, team_group, spot_name, confederations):
+    for confederation in confederations:
+        for t in confederation:
+            model.Add(team_group[spot_name] != team_group[t])
+
+def addTop2TeamsConstraints(model, team_group):
+    addTeamsInDifferentSubgroups(model, team_group, TOP_2_TEAMS, HALVES, "half")
+
+def addTop4TeamsConstraints(model, team_group):
+    addTeamsInDifferentSubgroups(model, team_group, TOP_4_TEAMS, ZONES, "zone")
+
+def addFixedAssignments(model, team_group, fixed_assignments):
+    if fixed_assignments:
+        for team, group in fixed_assignments.items():
+            model.Add(team_group[team] == group)
+
+# =============================================================================
+# MODEL CREATION AND SOLVING
 # =============================================================================
 
 def create_model(fixed_assignments=None):
     """Create CP model with all FIFA draw constraints"""
     model = cp_model.CpModel()
+    team_group = create_team_group_map(model)
 
-    team_group = {}
-    for team in ALL_TEAMS:
-        team_group[team] = model.NewIntVar(1, 12, team)
+    addPotConstraints(model, team_group) # All teams in a pot must go to a different group
+    addFederationConstraints(model, team_group) # 1 team per group, except for UEFA
+    addUEFAConstraints(model, team_group) # 1-2 teams per group
 
-    # Pot constraints
-    model.AddAllDifferent([team_group[t] for t in POT1])
-    model.AddAllDifferent([team_group[t] for t in POT2])
-    model.AddAllDifferent([team_group[t] for t in POT3])
-    model.AddAllDifferent([team_group[t] for t in POT4])
+    addTop2TeamsConstraints(model, team_group) # Top 2 Teams must be in oposite 'halves'
+    addTop4TeamsConstraints(model, team_group) # Top 4 Teams must be in different 'zones'
 
-    # Confederation constraints
-    model.AddAllDifferent([team_group[t] for t in CONCACAF])
-    model.AddAllDifferent([team_group[t] for t in CONMEBOL])
-    model.AddAllDifferent([team_group[t] for t in CAF])
-    model.AddAllDifferent([team_group[t] for t in AFC])
+    addPlayoffConstraints(model, team_group, "YA", [CONCACAF, CAF, OFC])
+    addPlayoffConstraints(model, team_group, "ZA", [CONCACAF, CONMEBOL, AFC])
 
-    # UEFA: 1-2 per group
-    for g in range(1, 13):
-        uefa_in_g = []
-        for t in UEFA:
-            is_in_g = model.NewBoolVar(f'{t}_in_{g}')
-            model.Add(team_group[t] == g).OnlyEnforceIf(is_in_g)
-            model.Add(team_group[t] != g).OnlyEnforceIf(is_in_g.Not())
-            uefa_in_g.append(is_in_g)
-
-        model.Add(sum(uefa_in_g) >= 1)
-        model.Add(sum(uefa_in_g) <= 2)
-
-    # CA and EA must be in different halves
-    # Half 1: A, B, C, J, K, L (groups 1, 2, 3, 10, 11, 12)
-    # Half 2: D, E, F, G, H, I (groups 4, 5, 6, 7, 8, 9)
-    HALF_1 = [1, 2, 3, 10, 11, 12]
-    HALF_2 = [4, 5, 6, 7, 8, 9]
-
-    # Create boolean: is CA in half 1?
-    ca_in_half1 = model.NewBoolVar('ca_in_half1')
-    ca_in_h1_bools = []
-    for g in HALF_1:
-        b = model.NewBoolVar(f'ca_in_h1_{g}')
-        model.Add(team_group["CA"] == g).OnlyEnforceIf(b)
-        model.Add(team_group["CA"] != g).OnlyEnforceIf(b.Not())
-        ca_in_h1_bools.append(b)
-    model.Add(sum(ca_in_h1_bools) >= 1).OnlyEnforceIf(ca_in_half1)
-    model.Add(sum(ca_in_h1_bools) == 0).OnlyEnforceIf(ca_in_half1.Not())
-
-    # If CA in half 1, EA must be in half 2
-    for g in HALF_1:
-        model.Add(team_group["EA"] != g).OnlyEnforceIf(ca_in_half1)
-    # If CA in half 2, EA must be in half 1
-    for g in HALF_2:
-        model.Add(team_group["EA"] != g).OnlyEnforceIf(ca_in_half1.Not())
-
-    # CA, EA, EB, EC must each be in different subgroups (4 subgroups, 4 teams)
-    # Subgroup 1: A, C, L (groups 1, 3, 12)
-    # Subgroup 2: B, J, K (groups 2, 10, 11)
-    # Subgroup 3: D, G, H (groups 4, 7, 8)
-    # Subgroup 4: E, F, I (groups 5, 6, 9)
-    SUBGROUPS = [
-        [1, 3, 12],   # sg1: A, C, L
-        [2, 10, 11],  # sg2: B, J, K
-        [4, 7, 8],    # sg3: D, G, H
-        [5, 6, 9],    # sg4: E, F, I
-    ]
-    SEPARATED_TEAMS = ["CA", "EA", "EB", "EC"]
-
-    # For each team, create a variable indicating which subgroup it's in (0-3)
-    team_subgroup = {}
-    for team in SEPARATED_TEAMS:
-        team_subgroup[team] = model.NewIntVar(0, 3, f'{team}_subgroup')
-
-        # Link team_subgroup to actual group assignment
-        for sg_idx, sg_groups in enumerate(SUBGROUPS):
-            # Create bool: is team in this subgroup?
-            in_this_sg = model.NewBoolVar(f'{team}_in_sg{sg_idx}')
-
-            # team is in subgroup sg_idx iff team_group[team] is in sg_groups
-            in_sg_bools = []
-            for g in sg_groups:
-                b = model.NewBoolVar(f'{team}_in_g{g}')
-                model.Add(team_group[team] == g).OnlyEnforceIf(b)
-                model.Add(team_group[team] != g).OnlyEnforceIf(b.Not())
-                in_sg_bools.append(b)
-
-            # in_this_sg is true iff team is in one of the groups in this subgroup
-            model.AddBoolOr(in_sg_bools).OnlyEnforceIf(in_this_sg)
-            model.AddBoolAnd([b.Not() for b in in_sg_bools]).OnlyEnforceIf(in_this_sg.Not())
-
-            # Link to team_subgroup variable
-            model.Add(team_subgroup[team] == sg_idx).OnlyEnforceIf(in_this_sg)
-
-    # All 4 teams must be in different subgroups
-    model.AddAllDifferent([team_subgroup[t] for t in SEPARATED_TEAMS])
-
-    # Playoff constraints
-    for t in CONCACAF:
-        model.Add(team_group["YA"] != team_group[t])
-    for t in CAF:
-        model.Add(team_group["YA"] != team_group[t])
-    for t in OFC:
-        model.Add(team_group["YA"] != team_group[t])
-
-    for t in CONCACAF:
-        model.Add(team_group["ZA"] != team_group[t])
-    for t in CONMEBOL:
-        model.Add(team_group["ZA"] != team_group[t])
-    for t in AFC:
-        model.Add(team_group["ZA"] != team_group[t])
-
-    # Fixed assignments
-    if fixed_assignments:
-        for team, group in fixed_assignments.items():
-            model.Add(team_group[team] == group)
+    addFixedAssignments(model, team_group, fixed_assignments) # For host teams and for simulations
 
     return model, team_group
-
 
 def check_feasibility(fixed_assignments):
     """Check if valid completion exists"""
@@ -162,31 +156,29 @@ def check_feasibility(fixed_assignments):
     result = solver.Solve(model)
     return result == cp_model.OPTIMAL or result == cp_model.FEASIBLE
 
+def get_pot(team):
+    for pot in ALL_POTS:
+        if team in pot:
+            return pot
+
+    raise ValueError(f"Pot could not be determined for team: {team}")
+
+def get_occupied_groups(pot, current_assignments):
+    occupied_groups = set()
+    for t in pot:
+        if t in current_assignments:
+            occupied_groups.add(current_assignments[t])
+
+    return occupied_groups
 
 def get_valid_group_for_team(team, current_assignments):
     """Get the first valid group for a team (lowest-numbered)"""
-
-    # Find team's pot
-    team_pot = None
-    pot_teams = None
-    for pot_num, pot in enumerate(ALL_POTS, 1):
-        if team in pot:
-            team_pot = pot_num
-            pot_teams = pot
-            break
-
-    if team_pot is None:
-        return None
-
-    # Find groups already occupied by a team from this pot
-    groups_with_pot = set()
-    for t, g in current_assignments.items():
-        if t in pot_teams:
-            groups_with_pot.add(g)
+    pot = get_pot(team)
+    occupied_groups = get_occupied_groups(pot, current_assignments)
 
     # Try each group in order, return first valid one
     for group in range(1, 13):
-        if group in groups_with_pot:
+        if group in occupied_groups:
             continue
 
         test_assignments = current_assignments.copy()
@@ -197,7 +189,6 @@ def get_valid_group_for_team(team, current_assignments):
 
     return None
 
-
 def get_initial_state():
     """Get initial state with hosts pre-assigned"""
     return {
@@ -206,75 +197,17 @@ def get_initial_state():
         'NC': 4   # USA → Group D
     }
 
+def get_pots():
+    """Get pot assignments (1-indexed)"""
+    return {
+        1: POT1,
+        2: POT2,
+        3: POT3,
+        4: POT4
+    }
 
-# =============================================================================
-# VERCEL SERVERLESS HANDLER
-# =============================================================================
 
-class handler(BaseHTTPRequestHandler):
-    """Vercel serverless function handler"""
-
-    def do_OPTIONS(self):
-        """Handle CORS preflight"""
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
-
-    def do_POST(self):
-        """Handle POST request"""
-        try:
-            # Read request body
-            content_length = int(self.headers['Content-Length'])
-            body = self.rfile.read(content_length)
-            data = json.loads(body.decode('utf-8'))
-
-            action = data.get('action')
-            assignments = data.get('assignments', {})
-
-            # Convert string keys to proper format
-            assignments = {str(k): int(v) for k, v in assignments.items()}
-
-            response_data = {}
-
-            if action == 'get_valid_group':
-                team = data.get('team')
-                valid_group = get_valid_group_for_team(team, assignments)
-                response_data = {
-                    'valid_group': valid_group,
-                    'team': team
-                }
-
-            elif action == 'check_feasibility':
-                is_feasible = check_feasibility(assignments)
-                response_data = {
-                    'feasible': is_feasible
-                }
-
-            elif action == 'get_initial_state':
-                response_data = {
-                    'assignments': get_initial_state()
-                }
-
-            else:
-                raise ValueError(f"Unknown action: {action}")
-
-            # Send response
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(json.dumps(response_data).encode('utf-8'))
-
-        except Exception as e:
-            # Send error response
-            self.send_response(500)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            error_response = {
-                'error': str(e),
-                'type': type(e).__name__
-            }
-            self.wfile.write(json.dumps(error_response).encode('utf-8'))
+if __name__ == "__main__":
+    # Test solver
+    initial_state = get_initial_state()
+    print(get_valid_group_for_team("CA", initial_state))

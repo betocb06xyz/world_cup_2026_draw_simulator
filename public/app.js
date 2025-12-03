@@ -3,18 +3,41 @@
  * Frontend with Python API backend (Vercel)
  */
 
-// API endpoint - will be '/api/solver' in production, can be overridden for local dev
+// API endpoint - will be '/api' in production, can be overridden for local dev
 // In localhost, uses the same port the page is served from (or ?port=XXXX to override)
 const API_ENDPOINT = (() => {
     if (window.location.hostname !== 'localhost') {
-        return '/api/solver';  // Production
+        return '/api';  // Production
     }
     const urlParams = new URLSearchParams(window.location.search);
     const port = urlParams.get('port') || window.location.port || '3000';
-    return `http://localhost:${port}/api/solver`;
+    return `http://localhost:${port}/api`;
 })();
 
+// ===== Display Order Constants =====
+// Maps pot number to slot index for each group type
+const DISPLAY_ORDERS = {
+    ORDER_1324: {1: 0, 3: 1, 2: 2, 4: 3},  // Groups A, D, G, J
+    ORDER_1432: {1: 0, 4: 1, 3: 2, 2: 3},  // Groups B, E, H, K
+    ORDER_1243: {1: 0, 2: 1, 4: 2, 3: 3}   // Groups C, F, I, L
+};
+
+// Maps slot index to pot number (reverse mappings)
+const SLOT_TO_POT = {
+    ORDER_1324: {0: 1, 1: 3, 2: 2, 3: 4},
+    ORDER_1432: {0: 1, 1: 4, 2: 3, 3: 2},
+    ORDER_1243: {0: 1, 1: 2, 2: 4, 3: 3}
+};
+
+function getDisplayOrderForGroup(group) {
+    if ([1, 4, 7, 10].includes(group)) return 'ORDER_1324';
+    if ([2, 5, 8, 11].includes(group)) return 'ORDER_1432';
+    return 'ORDER_1243';
+}
+
 // ===== Global State =====
+let POTS = null;  // Loaded from API
+
 let drawState = {
     assignments: {},
     currentPot: 1,
@@ -38,14 +61,14 @@ const actionQueue = {
         }
 
         this.processing = true;
-        const action = this.queue.shift();
 
         try {
-            await action();
+            await this.queue[0]();
         } catch (error) {
             console.error('Action failed:', error);
         }
 
+        this.queue.shift();  // dequeue after completion
         this.processing = false;
         this.processNext();
     }
@@ -84,6 +107,7 @@ async function getValidGroupForTeam(teamCode) {
 
 async function getInitialState() {
     const result = await callAPI('get_initial_state');
+    POTS = result.pots;
     return result.assignments;
 }
 
@@ -198,33 +222,13 @@ function createTeamItem(teamCode, teamData) {
 
 // ===== Groups Display =====
 function updateGroupsDisplay() {
-    // Display order mappings (pot -> slot index)
-    const ORDER_1324 = {1: 0, 3: 1, 2: 2, 4: 3};  // 1, 3, 2, 4 (A, D, G, J)
-    const ORDER_1432 = {1: 0, 4: 1, 3: 2, 2: 3};  // 1, 4, 3, 2 (B, E, H, K)
-    const ORDER_1243 = {1: 0, 2: 1, 4: 2, 3: 3};  // 1, 2, 4, 3 (C, F, I, L)
-
-    // Reverse mappings (slot index -> pot number)
-    const SLOT_TO_POT_1324 = {0: 1, 1: 3, 2: 2, 3: 4};
-    const SLOT_TO_POT_1432 = {0: 1, 1: 4, 2: 3, 3: 2};
-    const SLOT_TO_POT_1243 = {0: 1, 1: 2, 2: 4, 3: 3};
-
     for (let group = 1; group <= 12; group++) {
         const groupElement = document.getElementById(`group-${group}`);
         const slots = groupElement.querySelectorAll('.team-slot');
 
-        // Determine which order this group uses
-        let slotToPot;
-        let potToSlot;
-        if ([1, 4, 7, 10].includes(group)) {
-            slotToPot = SLOT_TO_POT_1324;
-            potToSlot = ORDER_1324;
-        } else if ([2, 5, 8, 11].includes(group)) {
-            slotToPot = SLOT_TO_POT_1432;
-            potToSlot = ORDER_1432;
-        } else {
-            slotToPot = SLOT_TO_POT_1243;
-            potToSlot = ORDER_1243;
-        }
+        const orderKey = getDisplayOrderForGroup(group);
+        const slotToPot = SLOT_TO_POT[orderKey];
+        const potToSlot = DISPLAY_ORDERS[orderKey];
 
         // Clear slots and show pot numbers for empty ones
         slots.forEach((slot, index) => {
@@ -321,13 +325,10 @@ async function processTeamClick(teamCode) {
     }
 
     // If clicking the same team again while it's selected with a valid group, confirm immediately
-    if (drawState.selectedTeam === teamCode) {
-        if (drawState.validGroup !== null) {
-            const group = drawState.validGroup;  // Save before clearHighlights resets it
-            clearHighlights();
-            assignTeamToGroup(teamCode, group);
-        }
-        // If validGroup is null, we're still fetching - just ignore the duplicate click
+    if (drawState.selectedTeam === teamCode && drawState.validGroup !== null) {
+        const group = drawState.validGroup;  // Save before clearHighlights resets it
+        clearHighlights();
+        assignTeamToGroup(teamCode, group);
         return;
     }
 
@@ -411,14 +412,8 @@ function highlightValidGroup(group, pot) {
 
         // Highlight the specific slot based on pot and group display order
         const slots = groupElement.querySelectorAll('.team-slot');
-        const ORDER_1324 = {1: 0, 3: 1, 2: 2, 4: 3};
-        const ORDER_1432 = {1: 0, 4: 1, 3: 2, 2: 3};
-        const ORDER_1243 = {1: 0, 2: 1, 4: 2, 3: 3};
-
-        let slotIndex = pot - 1;
-        if ([1, 4, 7, 10].includes(group)) slotIndex = ORDER_1324[pot];
-        else if ([2, 5, 8, 11].includes(group)) slotIndex = ORDER_1432[pot];
-        else if ([3, 6, 9, 12].includes(group)) slotIndex = ORDER_1243[pot];
+        const orderKey = getDisplayOrderForGroup(group);
+        const slotIndex = DISPLAY_ORDERS[orderKey][pot];
 
         if (slots[slotIndex]) {
             slots[slotIndex].classList.add('highlight-slot');
@@ -460,14 +455,7 @@ function handleGroupClick(group, event) {
 // ===== Assign Team to Group =====
 function assignTeamToGroup(teamCode, group) {
     drawState.assignments[teamCode] = group;
-    drawState.selectedTeam = null;
-    drawState.validGroup = null;
-
-    // Clear any remaining highlights
-    document.querySelectorAll('.team-item.selected').forEach(el => el.classList.remove('selected'));
-    document.querySelectorAll('.group').forEach(g => g.classList.remove('highlight', 'dimmed'));
-    document.querySelectorAll('.team-slot').forEach(s => s.classList.remove('highlight-slot'));
-
+    clearHighlights();
     updateGroupsDisplay();
     updateCurrentPot();
     updatePotStatus();
@@ -603,9 +591,9 @@ function updateDrawStatus(message) {
 }
 
 // ===== Reset =====
-async function resetDraw() {
+function resetDraw() {
     if (confirm("Start over? This will reset the entire draw.")) {
-        await initializeDraw();
+        actionQueue.enqueue(() => initializeDraw());
     }
 }
 

@@ -96,15 +96,16 @@ Teams are placed in specific positions based on their pot (see Appendix B in off
 
 ```
 ├── api/
-│   └── solver.py               # Python constraint solver (Vercel serverless)
-├── public/                     # Frontend files
+│   ├── index.py                # API endpoint (Vercel serverless)
+│   └── solver.py               # Constraint solver (OR-Tools)
+├── public/
 │   ├── index.html
 │   ├── style.css
-│   ├── app.js                  # Main application with action queue
-│   ├── team_mapping.js         # Team data and pot definitions
+│   ├── app.js                  # Main application
+│   ├── team_mapping.js         # Team display data
 │   └── flags/                  # SVG flag files
-├── docs/
-│   └── Draw procedures...pdf   # Official FIFA document
+├── docs/                       # Official FIFA documentation
+├── journey/                    # Development history
 ├── local_server.py             # Local development server
 ├── requirements.txt            # Python dependencies
 ├── vercel.json                 # Vercel configuration

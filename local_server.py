@@ -11,7 +11,7 @@ import sys
 # Add the api module to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'api'))
 
-from solver import handler as SolverHandler
+from index import handler as APIHandler
 
 
 class LocalHandler(SimpleHTTPRequestHandler):
@@ -19,15 +19,15 @@ class LocalHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory='public', **kwargs)
 
     def do_OPTIONS(self):
-        if self.path == '/api/solver':
-            SolverHandler.do_OPTIONS(self)
+        if self.path == '/api':
+            APIHandler.do_OPTIONS(self)
         else:
             self.send_response(200)
             self.end_headers()
 
     def do_POST(self):
-        if self.path == '/api/solver':
-            SolverHandler.do_POST(self)
+        if self.path == '/api':
+            APIHandler.do_POST(self)
         else:
             super().do_POST()
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 ╚════════════════════════════════════════════════════════════╝
 
 🚀 Server running at: http://localhost:{PORT}
-📡 API endpoint: http://localhost:{PORT}/api/solver
+📡 API endpoint: http://localhost:{PORT}/api
 
 Press Ctrl+C to stop
 """)
