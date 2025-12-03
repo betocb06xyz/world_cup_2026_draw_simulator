@@ -4,7 +4,7 @@ FIFA 2026 World Cup Draw - Vercel Serverless API Endpoint
 
 from http.server import BaseHTTPRequestHandler
 import json
-from solver import get_valid_group_for_team, get_initial_state, get_pots
+from api.solver import get_valid_group_for_team, get_initial_state, get_pots
 
 
 def get_valid_group_response(data):

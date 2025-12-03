@@ -8,10 +8,10 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os
 import sys
 
-# Add the api module to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'api'))
+# Add project root to path (so 'from api.solver import ...' works)
+sys.path.insert(0, os.path.dirname(__file__))
 
-from index import handler as APIHandler
+from api.index import handler as APIHandler
 
 
 class LocalHandler(SimpleHTTPRequestHandler):
