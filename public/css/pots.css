@@ -1,0 +1,155 @@
+/* FIFA 2026 World Cup Draw Simulator - Pots Panel */
+
+/* ===== Pots Panel ===== */
+.pots-panel {
+    background-color: var(--color-background);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pots-panel h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.current-pot-indicator {
+    background-color: var(--color-surface);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    border: 2px solid var(--color-accent);
+}
+
+#current-pot-text {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+/* ===== Pots Grid (2x2) ===== */
+.pots-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+/* ===== Pot ===== */
+.pot {
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.pot.active {
+    border-color: var(--color-accent);
+    border-width: 2px;
+}
+
+.pot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background-color: var(--color-surface);
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.pot-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.pot-status {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+    font-weight: 500;
+}
+
+.pot-teams {
+    padding: var(--spacing-sm);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xs);
+}
+
+/* ===== Team Item (in pot) ===== */
+.team-item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: var(--border-width) solid transparent;
+}
+
+.team-item:hover:not(.assigned):not(.disabled) {
+    background-color: var(--color-hover);
+    border-color: var(--color-accent);
+}
+
+.team-item.assigned {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: var(--color-surface);
+}
+
+.team-item.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.team-item.clickable {
+    border-color: var(--color-accent);
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+.team-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+    margin-right: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+}
+
+/* Special styling for logo-style flags (FIFA) */
+.team-flag[src*="fifa.svg"] {
+    object-fit: contain;
+    padding: 2px;
+    background-color: white;
+}
+
+.team-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.team-name {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.team-confederation {
+    font-size: 0.7rem;
+    color: var(--color-text-light);
+    font-weight: 400;
+}
+
+/* ===== Mobile Responsive ===== */
+@media (max-width: 600px) {
+    .pots-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pot-teams {
+        grid-template-columns: 1fr;
+    }
+}

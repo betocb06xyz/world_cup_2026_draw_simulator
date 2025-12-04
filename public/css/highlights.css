@@ -1,0 +1,58 @@
+/* FIFA 2026 World Cup Draw Simulator - Selection & Highlight Effects */
+
+/* ===== Two-Click Selection Highlight ===== */
+.team-item.selected {
+    background-color: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+}
+
+.team-item.selected .team-name {
+    color: white;
+}
+
+.group.highlight {
+    border-color: var(--color-success);
+    border-width: 3px;
+    box-shadow: 0 0 12px rgba(39, 174, 96, 0.4);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(39, 174, 96, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(39, 174, 96, 0.6);
+    }
+}
+
+.group.highlight .group-header {
+    background-color: var(--color-success);
+}
+
+.group.highlight:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 20px rgba(39, 174, 96, 0.6);
+    cursor: pointer;
+}
+
+.team-slot.highlight-slot {
+    background-color: rgba(39, 174, 96, 0.2);
+    border: 2px solid var(--color-success);
+    border-style: solid;
+    animation: slot-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes slot-pulse {
+    0%, 100% {
+        background-color: rgba(39, 174, 96, 0.2);
+    }
+    50% {
+        background-color: rgba(39, 174, 96, 0.35);
+    }
+}
+
+.group.dimmed {
+    opacity: 0.4;
+}

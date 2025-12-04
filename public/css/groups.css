@@ -1,0 +1,179 @@
+/* FIFA 2026 World Cup Draw Simulator - Groups Panel */
+
+/* ===== Groups Panel ===== */
+.groups-panel {
+    background-color: var(--color-background);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.groups-panel h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+/* ===== Groups Grid (3x4) ===== */
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 1400px) {
+    .groups-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .groups-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .groups-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Group ===== */
+.group {
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.group.valid {
+    border-color: var(--color-success);
+    border-width: 2px;
+    box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.1);
+}
+
+.group.invalid {
+    opacity: 0.5;
+}
+
+.group.clickable {
+    cursor: pointer;
+}
+
+.group.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.group-header {
+    background-color: var(--color-primary);
+    color: white;
+    padding: var(--spacing-md);
+    font-weight: 600;
+    text-align: center;
+    font-size: var(--font-size-base);
+}
+
+/* Subgroup colors for tournament pathway visualization */
+/* Subgroups 1 & 2 are related (red/orange family), Subgroups 3 & 4 are related (blue/teal family) */
+
+/* Subgroup 1: A, C, L (groups 1, 3, 12) - Crimson red */
+#group-1 .group-header,
+#group-3 .group-header,
+#group-12 .group-header {
+    background-color: #c0392b;
+}
+
+/* Subgroup 2: B, J, K (groups 2, 10, 11) - Warm orange */
+#group-2 .group-header,
+#group-10 .group-header,
+#group-11 .group-header {
+    background-color: #e67e22;
+}
+
+/* Subgroup 3: D, G, H (groups 4, 7, 8) - Teal */
+#group-4 .group-header,
+#group-7 .group-header,
+#group-8 .group-header {
+    background-color: #16a085;
+}
+
+/* Subgroup 4: E, F, I (groups 5, 6, 9) - Deep blue */
+#group-5 .group-header,
+#group-6 .group-header,
+#group-9 .group-header {
+    background-color: #2980b9;
+}
+
+.group-teams {
+    padding: var(--spacing-sm);
+    background-color: var(--color-background);
+}
+
+/* ===== Team Slot (in group) ===== */
+.team-slot {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: var(--border-radius);
+    background-color: var(--color-surface);
+    border: var(--border-width) dashed var(--color-border);
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.team-slot:last-child {
+    margin-bottom: 0;
+}
+
+.team-slot.filled {
+    background-color: white;
+    border-style: solid;
+    border-color: var(--color-border);
+}
+
+.team-slot.host {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-color: var(--color-accent);
+    border-width: 2px;
+}
+
+.team-slot-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.team-slot-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+    margin-right: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+}
+
+/* Special styling for logo-style flags (FIFA) in groups */
+.team-slot-flag[src*="fifa.svg"] {
+    object-fit: contain;
+    padding: 2px;
+    background-color: white;
+}
+
+.team-slot-name {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.slot-pot-number {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-border);
+    width: 100%;
+    text-align: center;
+}
