@@ -214,12 +214,28 @@ function createTeamItem(teamCode, teamData) {
     flag.alt = teamData.name;
     flag.onerror = () => { flag.src = 'flags/placeholder.svg'; };
 
+    const textContainer = document.createElement('div');
+    textContainer.className = 'team-text';
+
     const name = document.createElement('span');
     name.className = 'team-name';
-    name.textContent = teamData.displayName || teamData.name;
+    name.textContent = teamData.name;
+
+    const confederation = document.createElement('span');
+    confederation.className = 'team-confederation';
+    // For playoff teams, show abbreviations (e.g., "ITA/WAL/NIR/BIH") instead of confederation
+    if (teamData.playoff && teamData.displayName) {
+        const parts = teamData.displayName.split(': ');
+        confederation.textContent = parts.length > 1 ? parts[1] : teamData.confederation;
+    } else {
+        confederation.textContent = teamData.confederation;
+    }
+
+    textContainer.appendChild(name);
+    textContainer.appendChild(confederation);
 
     div.appendChild(flag);
-    div.appendChild(name);
+    div.appendChild(textContainer);
 
     div.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -274,7 +290,14 @@ function updateGroupsDisplay() {
 
                 const name = document.createElement('span');
                 name.className = 'team-slot-name';
-                name.textContent = teamData.name;
+                // For playoff teams, show abbreviations instead of confederation
+                if (teamData.playoff && teamData.displayName) {
+                    const parts = teamData.displayName.split(': ');
+                    const abbrev = parts.length > 1 ? parts[1] : teamData.confederation;
+                    name.textContent = `${teamData.name} - ${abbrev}`;
+                } else {
+                    name.textContent = `${teamData.name} - ${teamData.confederation}`;
+                }
 
                 content.appendChild(flag);
                 content.appendChild(name);
