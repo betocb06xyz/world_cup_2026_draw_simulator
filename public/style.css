@@ -113,10 +113,12 @@ body {
     margin-bottom: var(--spacing-sm);
 }
 
-.subtitle {
-    font-size: var(--font-size-lg);
-    color: var(--color-text-light);
-    margin-bottom: var(--spacing-sm);
+.header-info {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
 }
 
 .instructions {
@@ -125,11 +127,42 @@ body {
     background-color: var(--color-surface);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius);
-    display: inline-block;
-    margin-bottom: var(--spacing-md);
 }
 
 .instructions strong {
+    color: var(--color-primary);
+}
+
+.draw-rules {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+    background-color: var(--color-surface);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    max-width: 800px;
+    text-align: left;
+}
+
+.draw-rules summary {
+    cursor: pointer;
+    color: var(--color-primary);
+    text-align: center;
+}
+
+.draw-rules summary:hover {
+    color: var(--color-accent);
+}
+
+.draw-rules ol {
+    margin: var(--spacing-sm) 0 0 var(--spacing-md);
+    padding-left: var(--spacing-md);
+}
+
+.draw-rules li {
+    margin-bottom: var(--spacing-xs);
+}
+
+.draw-rules li strong {
     color: var(--color-primary);
 }
 
@@ -191,6 +224,26 @@ body {
 
 .btn-secondary:hover:not(:disabled) {
     background-color: var(--color-hover);
+}
+
+.btn-warning {
+    background-color: var(--color-warning);
+    color: white;
+    border-color: var(--color-warning);
+}
+
+.btn-warning:hover:not(:disabled) {
+    background-color: #e67e22;
+}
+
+.btn.stop-mode {
+    background-color: var(--color-error);
+    color: white;
+    border-color: var(--color-error);
+}
+
+.btn.stop-mode:hover:not(:disabled) {
+    background-color: #c0392b;
 }
 
 /* ===== Main Content Layout ===== */

@@ -8,6 +8,8 @@ An interactive web application that simulates the FIFA World Cup 2026 group stag
 - **Constraint Validation**: Uses OR-Tools CP-SAT solver to ensure all FIFA draw rules are respected
 - **Optimized Solver**: Returns the first valid group immediately (lowest-numbered), matching official procedure
 - **Race-Condition Free**: Action queue system ensures reliable operation even with fast clicks
+- **Undo Support**: Revert assignments with Ctrl+Z or Undo button (except host pre-assignments)
+- **Stop Full Draw**: Cancel an automated draw mid-execution
 - **Modern UI**: Clean 2x2 pot grid layout with 3x4 group display
 - **Complete Simulation**: Run the entire draw automatically or control each selection
 
@@ -154,8 +156,14 @@ Teams are placed in specific positions based on their pot (see Appendix B in off
 ### Automated Drawing
 
 - **Draw One Team**: Randomly selects a team and assigns to the lowest valid group
-- **Run Full Draw**: Completes the entire draw automatically
+- **Run Full Draw**: Completes the entire draw automatically (click again to stop)
 - **Start Over**: Resets the draw (hosts are re-assigned)
+
+### Undo
+
+- **Undo Button**: Click to revert the last team assignment
+- **Ctrl+Z / Cmd+Z**: Keyboard shortcut for undo
+- Host pre-assignments (Mexico, Canada, USA) cannot be undone
 
 ## References
 

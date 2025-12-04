@@ -42,17 +42,23 @@ let drawState = {
     assignments: {},
     currentPot: 1,
     selectedTeam: null,
-    validGroup: null       // Valid group for selected team
+    validGroup: null,      // Valid group for selected team
+    history: []            // Stack of team codes for undo (excludes hosts)
 };
 
 // ===== Action Queue (prevents race conditions) =====
 const actionQueue = {
     queue: [],
     processing: false,
+    cancelRequested: false,
 
     enqueue(action) {
         this.queue.push(action);
         this.processNext();
+    },
+
+    cancel() {
+        this.cancelRequested = true;
     },
 
     async processNext() {
@@ -61,6 +67,7 @@ const actionQueue = {
         }
 
         this.processing = true;
+        this.cancelRequested = false;
 
         try {
             await this.queue[0]();
@@ -71,6 +78,10 @@ const actionQueue = {
         this.queue.shift();  // dequeue after completion
         this.processing = false;
         this.processNext();
+    },
+
+    shouldStop() {
+        return this.cancelRequested;
     }
 };
 
@@ -160,13 +171,11 @@ async function initializeDraw() {
     updateGroupsDisplay();
     updatePotStatus();
 
-    // Clear and initialize assignment log
-    clearAssignmentLog();
-
-    // Add hosts to log
-    addToAssignmentLog("NA", 1, true);
-    addToAssignmentLog("NB", 2, true);
-    addToAssignmentLog("NC", 4, true);
+    // Clear history and add hosts
+    clearHistory();
+    addToHistory("NA", 1, true);
+    addToHistory("NB", 2, true);
+    addToHistory("NC", 4, true);
 
     updateDrawStatus("Ready to begin drawing. Hosts pre-assigned to Groups A, B, and D.");
 }
@@ -463,52 +472,105 @@ function assignTeamToGroup(teamCode, group) {
     const teamData = TEAM_DATA[teamCode];
     const groupLetter = GROUP_LETTERS[group - 1];
 
-    // Add to assignment log
-    addToAssignmentLog(teamCode, group, false);
+    // Add to history
+    addToHistory(teamCode, group, false);
 
     updateDrawStatus(`${teamData.name} assigned to Group ${groupLetter}`);
 }
 
 // ===== Assignment Log Functions =====
-function addToAssignmentLog(teamCode, group, isHost = false) {
+// Renders the entire log from drawState.history (single source of truth)
+function renderAssignmentLog() {
     const logContent = document.getElementById('assignment-log-content');
-    const teamData = TEAM_DATA[teamCode];
-    const groupLetter = GROUP_LETTERS[group - 1];
+    logContent.innerHTML = '';
 
-    const entry = document.createElement('div');
-    entry.className = 'assignment-log-entry' + (isHost ? ' host' : '');
+    for (const entry of drawState.history) {
+        const teamData = TEAM_DATA[entry.team];
+        const groupLetter = GROUP_LETTERS[entry.group - 1];
 
-    const flag = document.createElement('img');
-    flag.className = 'assignment-log-flag';
-    flag.src = `flags/${teamData.flag}.svg`;
-    flag.alt = teamData.name;
-    flag.onerror = () => { flag.src = 'flags/placeholder.svg'; };
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'assignment-log-entry' + (entry.isHost ? ' host' : '');
 
-    const teamName = document.createElement('span');
-    teamName.textContent = teamData.name;
+        const flag = document.createElement('img');
+        flag.className = 'assignment-log-flag';
+        flag.src = `flags/${teamData.flag}.svg`;
+        flag.alt = teamData.name;
+        flag.onerror = () => { flag.src = 'flags/placeholder.svg'; };
 
-    const arrow = document.createElement('span');
-    arrow.className = 'assignment-log-arrow';
-    arrow.textContent = '→';
+        const teamName = document.createElement('span');
+        teamName.textContent = teamData.name;
 
-    const groupName = document.createElement('span');
-    groupName.className = 'assignment-log-group';
-    groupName.textContent = `Group ${groupLetter}`;
+        const arrow = document.createElement('span');
+        arrow.className = 'assignment-log-arrow';
+        arrow.textContent = '→';
 
-    entry.appendChild(flag);
-    entry.appendChild(teamName);
-    entry.appendChild(arrow);
-    entry.appendChild(groupName);
+        const groupName = document.createElement('span');
+        groupName.className = 'assignment-log-group';
+        groupName.textContent = `Group ${groupLetter}`;
 
-    logContent.appendChild(entry);
+        entryDiv.appendChild(flag);
+        entryDiv.appendChild(teamName);
+        entryDiv.appendChild(arrow);
+        entryDiv.appendChild(groupName);
+
+        logContent.appendChild(entryDiv);
+    }
 
     // Auto-scroll to bottom
     logContent.scrollTop = logContent.scrollHeight;
 }
 
-function clearAssignmentLog() {
-    const logContent = document.getElementById('assignment-log-content');
-    logContent.innerHTML = '';
+function addToHistory(teamCode, group, isHost = false) {
+    drawState.history.push({ team: teamCode, group: group, isHost: isHost });
+    renderAssignmentLog();
+}
+
+function clearHistory() {
+    drawState.history = [];
+    renderAssignmentLog();
+}
+
+// ===== Undo Function =====
+function undoLastAssignment() {
+    // Don't undo if full draw is running
+    if (isRunningFullDraw) {
+        return;
+    }
+
+    // Find the last non-host entry
+    if (drawState.history.length === 0) {
+        return;
+    }
+
+    const lastEntry = drawState.history[drawState.history.length - 1];
+
+    // Don't undo hosts
+    if (lastEntry.isHost) {
+        updateDrawStatus("Cannot undo host assignments.");
+        return;
+    }
+
+    // Remove from history
+    drawState.history.pop();
+
+    // Remove from assignments
+    delete drawState.assignments[lastEntry.team];
+
+    // Update UI
+    renderAssignmentLog();
+    updateGroupsDisplay();
+    updateCurrentPot();
+    updatePotStatus();
+    clearHighlights();
+
+    const teamData = TEAM_DATA[lastEntry.team];
+    updateDrawStatus(`Undid ${teamData.name} assignment.`);
+}
+
+function canUndo() {
+    if (drawState.history.length === 0) return false;
+    const lastEntry = drawState.history[drawState.history.length - 1];
+    return !lastEntry.isHost;
 }
 
 // ===== Draw One Random Team =====
@@ -551,11 +613,32 @@ async function processDrawOneTeam() {
 }
 
 // ===== Run Full Draw =====
+let isRunningFullDraw = false;
+
 function runFullDraw() {
-    actionQueue.enqueue(() => processFullDraw());
+    if (isRunningFullDraw) {
+        // Stop requested
+        actionQueue.cancel();
+    } else {
+        // Start the draw
+        actionQueue.enqueue(() => processFullDraw());
+    }
+}
+
+function setFullDrawButtonState(running) {
+    isRunningFullDraw = running;
+    const btn = document.getElementById('run-all-btn');
+    if (running) {
+        btn.textContent = 'Stop Draw';
+        btn.classList.add('stop-mode');
+    } else {
+        btn.textContent = 'Run Full Draw';
+        btn.classList.remove('stop-mode');
+    }
 }
 
 async function processFullDraw() {
+    setFullDrawButtonState(true);
     updateDrawStatus("Running full draw...");
 
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -565,19 +648,29 @@ async function processFullDraw() {
         const maxIterations = 100;
 
         while (getCurrentPot(drawState.assignments) > 0 && iterations < maxIterations) {
+            // Check for cancellation before each team
+            if (actionQueue.shouldStop()) {
+                updateDrawStatus("Draw stopped by user.");
+                break;
+            }
+
             await processDrawOneTeam();
             await delay(200);
             iterations++;
         }
 
-        if (iterations >= maxIterations) {
-            updateDrawStatus("Draw stopped - safety limit reached");
-        } else {
-            updateDrawStatus("Draw complete! All teams assigned.");
+        if (!actionQueue.shouldStop()) {
+            if (iterations >= maxIterations) {
+                updateDrawStatus("Draw stopped - safety limit reached");
+            } else {
+                updateDrawStatus("Draw complete! All teams assigned.");
+            }
         }
     } catch (error) {
         console.error("Error in full draw:", error);
         updateDrawStatus("Error during full draw: " + error.message);
+    } finally {
+        setFullDrawButtonState(false);
     }
 }
 
@@ -601,6 +694,7 @@ function resetDraw() {
 function setupEventListeners() {
     document.getElementById('reset-btn').addEventListener('click', resetDraw);
     document.getElementById('draw-one-btn').addEventListener('click', drawOneTeam);
+    document.getElementById('undo-btn').addEventListener('click', undoLastAssignment);
     document.getElementById('run-all-btn').addEventListener('click', runFullDraw);
 
     // Add click listeners to groups for two-click confirmation
@@ -616,6 +710,14 @@ function setupEventListeners() {
             !e.target.closest('.group')) {
             clearHighlights();
             updateDrawStatus('Selection cancelled.');
+        }
+    });
+
+    // Ctrl+Z for undo
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            e.preventDefault();
+            undoLastAssignment();
         }
     });
 }

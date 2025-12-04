@@ -21,14 +21,27 @@
         <!-- Header -->
         <header class="header">
             <h1>FIFA 2026 World Cup Draw Simulator</h1>
-            <p class="subtitle">Interactive Group Stage Draw</p>
-            <div class="instructions">
-                <strong>How to use:</strong>
-                1. Click a team to see its valid group highlighted |
-                2. Click again (team or group) to confirm |
-                3. Or use the buttons below to draw automatically
+            <div class="header-info">
+                <div class="instructions">
+                    <strong>How to use:</strong>
+                    1. Click a team to see its valid group |
+                    2. Click again to confirm |
+                    3. Use Undo or Ctrl+Z to revert |
+                    4. Run Full Draw auto-completes (click again to stop)
+                </div>
+                <details class="draw-rules">
+                    <summary><strong>Official Draw Rules</strong></summary>
+                    <ol>
+                        <li><strong>Host pre-assignment:</strong> Mexico → Group A, Canada → Group B, USA → Group D.</li>
+                        <li><strong>Confederation separation:</strong> Max one team per confederation per group (except UEFA).</li>
+                        <li><strong>UEFA distribution:</strong> Each group must have 1-2 UEFA teams (16 teams, including 4 UEFA playoffs, across 12 groups).</li>
+                        <li><strong>Playoff constraints:</strong> FIFA Playoff winners cannot be grouped with teams from confederations in their pathway.</li>
+                        <li><strong>Top 4 separation:</strong> Argentina, Spain, France, and England must be in different zones (group colors) to avoid early knockout matches.</li>
+                        <li><strong>Top 2 in opposite halves:</strong> Argentina and Spain must be in opposite halves (Red/Orange vs Green/Blue) so they cannot meet before the final.</li>
+                    </ol>
+                </details>
             </div>
-            <button id="reset-btn" class="btn btn-secondary">
+            <button id="reset-btn" class="btn btn-warning">
                 <span>↻</span> Start Over
             </button>
         </header>
@@ -94,6 +107,9 @@
                 <div class="action-buttons">
                     <button id="draw-one-btn" class="btn btn-primary">
                         🎲 Draw One Team
+                    </button>
+                    <button id="undo-btn" class="btn btn-secondary" title="Undo (Ctrl+Z)">
+                        ↩ Undo
                     </button>
                     <button id="run-all-btn" class="btn btn-accent">
                         ⚡ Run Full Draw
