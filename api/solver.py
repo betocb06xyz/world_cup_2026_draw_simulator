@@ -44,11 +44,10 @@ ZONES = [
 # CP MODEL HELPERS
 # =============================================================================
 
-def addSumOfBoolsInRangeFlag(model, bool_list, lb, ub, condition_name):
-    flag = model.NewBoolVar(condition_name)
-    model.Add(sum(bool_list) >= lb).OnlyEnforceIf(flag)
-    model.Add(sum(bool_list) <= ub).OnlyEnforceIf(flag.Not())
-    return flag
+def addSumOfBoolsInRange(model, bool_list, lb, ub):
+    """Enforce: lb <= sum(bool_list) <= ub"""
+    model.Add(sum(bool_list) >= lb)
+    model.Add(sum(bool_list) <= ub)
 
 def addListContainsTrueFlag(model, bool_list, condition_name):
     flag = model.NewBoolVar(condition_name)
@@ -63,21 +62,30 @@ def addIntEqValFlag(model, int_var, val, condition_name):
     return flag
 
 def addTeamsInDifferentSubgroups(model, team_group, separated_teams, subgroups, condition_name):
+    """Ensure each team in separated_teams is in a different subgroup"""
     assert len(separated_teams) == len(subgroups)
-    team_subgroup = {}
-    for team in separated_teams:
-        team_subgroup[team] = model.NewIntVar(0, len(separated_teams), f'{team}_{condition_name}')
 
+    for team in separated_teams:
         for sg_idx, sg_groups in enumerate(subgroups):
+            # For each subgroup, create a bool: is this team in this subgroup?
             in_sg_bools = []
             for g in sg_groups:
-                flag = addIntEqValFlag(model, team_group[team], g, f'{team}_in_g{g}')
+                flag = addIntEqValFlag(model, team_group[team], g, f'{team}_in_g{g}_{condition_name}')
                 in_sg_bools.append(flag)
 
-            in_this_sg = addListContainsTrueFlag(model, in_sg_bools, f'{team}_in_{condition_name}{sg_idx}')
-            model.Add(team_subgroup[team] == sg_idx).OnlyEnforceIf(in_this_sg)
+            # team is in this subgroup if it's in any of the subgroup's groups
+            in_this_sg = model.NewBoolVar(f'{team}_in_{condition_name}{sg_idx}')
+            model.AddMaxEquality(in_this_sg, in_sg_bools)
 
-    model.AddAllDifferent([team_subgroup[t] for t in separated_teams])
+            # For each OTHER team, if this team is in this subgroup,
+            # the other team cannot be in any group of this subgroup
+            for other_team in separated_teams:
+                if other_team == team:
+                    continue
+                for g in sg_groups:
+                    other_in_g = addIntEqValFlag(model, team_group[other_team], g, f'{other_team}_in_g{g}_{condition_name}')
+                    # If team is in this subgroup, other_team cannot be in group g
+                    model.Add(other_in_g == 0).OnlyEnforceIf(in_this_sg)
 
 def create_team_group_map(model):
     team_group = {}
@@ -107,7 +115,7 @@ def addUEFAConstraints(model, team_group):
             t_in_g = addIntEqValFlag(model, team_group[t], g, f'{t}_in_g{g}')
             uefa_in_g.append(t_in_g)
 
-        addSumOfBoolsInRangeFlag(model, uefa_in_g, 1, 2, f'valid_uefa_in_g{g}')
+        addSumOfBoolsInRange(model, uefa_in_g, 1, 2)
 
 def addPlayoffConstraints(model, team_group, spot_name, confederations):
     for confederation in confederations:
