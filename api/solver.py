@@ -9,16 +9,25 @@ from ortools.sat.python import cp_model
 # TEAM DATA
 # =============================================================================
 
-CONCACAF = ["NA", "NB", "NC", "ND", "NE", "NF"]
-CONMEBOL = ["CA", "CB", "CC", "CD", "CE", "CF"]
-UEFA = ["EA", "EB", "EC", "ED", "EE", "EF", "EG", "EH",
-        "EI", "EJ", "EK", "EL", "EM", "EN", "EO", "EP"]
-CAF = ["FA", "FB", "FC", "FD", "FE", "FF", "FG", "FH", "FI"]
-AFC = ["AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH"]
-OFC = ["XA"]
-PLAYOFF_Y = ["YA"]
-PLAYOFF_Z = ["ZA"]
-ALL_TEAMS = CONCACAF + CONMEBOL + UEFA + CAF + AFC + OFC + PLAYOFF_Y + PLAYOFF_Z
+TEAMS = {
+    "CONCACAF": ["NA", "NB", "NC", "ND", "NE", "NF", "YA", "ZA"],
+    "CONMEBOL": ["CA", "CB", "CC", "CD", "CE", "CF", "ZA"],
+    "UEFA":     ["EA", "EB", "EC", "ED", "EE", "EF", "EG", "EH", "EI", "EJ", "EK", "EL", "EM", "EN", "EO", "EP"],
+    "CAF":      ["FA", "FB", "FC", "FD", "FE", "FF", "FG", "FH", "FI", "YA"],
+    "AFC":      ["AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "ZA"],
+    "OFC":      ["XA", "YA"],
+}
+NUM_OF_TEAMS = 48
+# YA and ZA are PLAYOFF 1 and 2
+
+TEAMS_PER_GROUP = {
+    "CONCACAF": {"min": 0, "max": 1},
+    "CONMEBOL": {"min": 0, "max": 1},
+    "CAF":      {"min": 0, "max": 1},
+    "AFC":      {"min": 0, "max": 1},
+    "OFC":      {"min": 0, "max": 1},
+    "UEFA":     {"min": 1, "max": 2},
+}
 
 POT1 = ["NA", "NB", "NC", "CA", "CB", "EA", "EB", "EC", "ED", "EE", "EF", "EG"]
 POT2 = ["CC", "CD", "CE", "EH", "EI", "EJ", "FA", "FB", "AA", "AB", "AC", "AD"]
@@ -26,107 +35,93 @@ POT3 = ["ND", "CF", "EK", "EL", "FC", "FD", "FE", "FF", "FG", "AE", "AF", "AG"]
 POT4 = ["NE", "NF", "EM", "EN", "EO", "EP", "FH", "FI", "AH", "XA", "YA", "ZA"]
 ALL_POTS = [POT1, POT2, POT3, POT4]
 
-TOP_2_TEAMS = ["CA", "EA"] # Top 2 teams, each one must be in different 'half'
-HALVES = [
-    [1, 2, 3, 10, 11, 12], # Half 1: A, B, C, J, K, L
-    [4, 5, 6, 7, 8, 9] # Half 2: D, E, F, G, H, I
-]
+NUM_OF_GROUPS = 12
+GROUPS = range(1, NUM_OF_GROUPS + 1)
 
+TOP_2_TEAMS = ["CA", "EA"] # Top 2 teams, each one must be in different 'half'
 TOP_4_TEAMS = ["CA", "EA", "EB", "EC"] # Top 4 teams, each one must be in a different 'zone'
-ZONES = [
+TOP_4_ZONES = [
     [1, 3, 12],   # Zone 1: A, C, L
     [2, 10, 11],  # Zone 2: B, J, K
     [4, 7, 8],    # Zone 3: D, G, H
     [5, 6, 9],    # Zone 4: E, F, I
+]
+TOP_2_ZONES = [
+    TOP_4_ZONES[0] + TOP_4_ZONES[1],
+    TOP_4_ZONES[2] + TOP_4_ZONES[3]
 ]
 
 # =============================================================================
 # CP MODEL HELPERS
 # =============================================================================
 
-def addSumOfBoolsInRange(model, bool_list, lb, ub):
-    """Enforce: lb <= sum(bool_list) <= ub"""
-    model.Add(sum(bool_list) >= lb)
-    model.Add(sum(bool_list) <= ub)
-
-def addListContainsTrueFlag(model, bool_list, condition_name):
-    flag = model.NewBoolVar(condition_name)
-    model.Add(sum(bool_list) >= 1).OnlyEnforceIf(flag)
-    model.Add(sum(bool_list) == 0).OnlyEnforceIf(flag.Not())
-    return flag
-
-def addIntEqValFlag(model, int_var, val, condition_name):
-    flag = model.NewBoolVar(condition_name)
+def addIntEqValFlag(model, int_var, val, namespace):
+    flag = model.NewBoolVar(namespace)
     model.Add(int_var == val).OnlyEnforceIf(flag)
     model.Add(int_var != val).OnlyEnforceIf(flag.Not())
     return flag
 
-def addTeamsInDifferentSubgroups(model, team_group, separated_teams, subgroups, condition_name):
+def addSeparateTeamsConstraint(model, team_group, namespace, separated_teams, subgroups):
     """Ensure each team in separated_teams is in a different subgroup"""
     assert len(separated_teams) == len(subgroups)
 
-    for team in separated_teams:
-        for sg_idx, sg_groups in enumerate(subgroups):
-            # For each subgroup, create a bool: is this team in this subgroup?
-            in_sg_bools = []
-            for g in sg_groups:
-                flag = addIntEqValFlag(model, team_group[team], g, f'{team}_in_g{g}_{condition_name}')
-                in_sg_bools.append(flag)
+    team_subgroup = create_team_subgroup_map(model, namespace, separated_teams, 1, len(separated_teams))
+    model.AddAllDifferent([team_subgroup[t] for t in separated_teams])
 
-            # team is in this subgroup if it's in any of the subgroup's groups
-            in_this_sg = model.NewBoolVar(f'{team}_in_{condition_name}{sg_idx}')
-            model.AddMaxEquality(in_this_sg, in_sg_bools)
+    for t in separated_teams:
+        for sg_idx, subgroup in enumerate(subgroups, 1):
+            for g in subgroup:
+                t_in_g = addIntEqValFlag(model, team_group[t], g, f'{namespace}_{t}_in_{g}')
+                model.Add(team_subgroup[t] == sg_idx).OnlyEnforceIf(t_in_g)
 
-            # For each OTHER team, if this team is in this subgroup,
-            # the other team cannot be in any group of this subgroup
-            for other_team in separated_teams:
-                if other_team == team:
-                    continue
-                for g in sg_groups:
-                    other_in_g = addIntEqValFlag(model, team_group[other_team], g, f'{other_team}_in_g{g}_{condition_name}')
-                    # If team is in this subgroup, other_team cannot be in group g
-                    model.Add(other_in_g == 0).OnlyEnforceIf(in_this_sg)
+def create_team_subgroup_map(model, namespace, teams, lb, ub):
+    team_subgroup = {}
+    for t in teams:
+        var_name = t
+        if namespace:
+            var_name = f"{namespace}_{var_name}"
+
+        team_subgroup[t] = model.NewIntVar(lb, ub, var_name)
+
+    return team_subgroup
 
 def create_team_group_map(model):
-    team_group = {}
-    for team in ALL_TEAMS:
-        team_group[team] = model.NewIntVar(1, 12, team)
+    all_teams = []
+    for _, teams in TEAMS.items():
+        all_teams += teams
+    all_teams = list(set(all_teams))
+    assert len(all_teams) == NUM_OF_TEAMS, f"len(all_teams): {len(all_teams)} must be equal to NUM_OF_TEAMS: {NUM_OF_TEAMS}"
 
-    return team_group
+    return create_team_subgroup_map(model, "", all_teams, 1, NUM_OF_GROUPS)
+
 
 # =============================================================================
 # CONSTRAINTS
 # =============================================================================
 
 def addPotConstraints(model, team_group):
+    ''' All teams in a pot must go to a different group'''
     for pot in ALL_POTS:
         model.AddAllDifferent([team_group[t] for t in pot])
 
-def addFederationConstraints(model, team_group):
-    # 1 team per group
-    for confederation in [CONCACAF, CONMEBOL, CAF, AFC, OFC]:
-        model.AddAllDifferent([team_group[t] for t in confederation])
+def addConfederationConstraints(model, team_group):
+    for confederation, teams in TEAMS.items():
+        for group in GROUPS:
+            teams_in_group = []
+            for team in teams:
+                t_in_g = addIntEqValFlag(model, team_group[team], group, f'{team}_in_{group}')
+                teams_in_group.append(t_in_g)
 
-def addUEFAConstraints(model, team_group):
-    # UEFA: 1-2 teams per group
-    for g in range(1, 13):
-        uefa_in_g = []
-        for t in UEFA:
-            t_in_g = addIntEqValFlag(model, team_group[t], g, f'{t}_in_g{g}')
-            uefa_in_g.append(t_in_g)
-
-        addSumOfBoolsInRange(model, uefa_in_g, 1, 2)
-
-def addPlayoffConstraints(model, team_group, spot_name, confederations):
-    for confederation in confederations:
-        for t in confederation:
-            model.Add(team_group[spot_name] != team_group[t])
+            lb = TEAMS_PER_GROUP[confederation]["min"]
+            ub = TEAMS_PER_GROUP[confederation]["max"]
+            model.Add(sum(teams_in_group) >= lb)
+            model.Add(sum(teams_in_group) <= ub)
 
 def addTop2TeamsConstraints(model, team_group):
-    addTeamsInDifferentSubgroups(model, team_group, TOP_2_TEAMS, HALVES, "half")
+    addSeparateTeamsConstraint(model, team_group, "t2", TOP_2_TEAMS, TOP_2_ZONES)
 
 def addTop4TeamsConstraints(model, team_group):
-    addTeamsInDifferentSubgroups(model, team_group, TOP_4_TEAMS, ZONES, "zone")
+    addSeparateTeamsConstraint(model, team_group, "t4", TOP_4_TEAMS, TOP_4_ZONES)
 
 def addFixedAssignments(model, team_group, fixed_assignments):
     if fixed_assignments:
@@ -142,18 +137,12 @@ def create_model(fixed_assignments=None):
     model = cp_model.CpModel()
     team_group = create_team_group_map(model)
 
-    addPotConstraints(model, team_group) # All teams in a pot must go to a different group
-    addFederationConstraints(model, team_group) # 1 team per group, except for UEFA
-    addUEFAConstraints(model, team_group) # 1-2 teams per group
-
-    addTop2TeamsConstraints(model, team_group) # Top 2 Teams must be in oposite 'halves'
-    addTop4TeamsConstraints(model, team_group) # Top 4 Teams must be in different 'zones'
-
-    addPlayoffConstraints(model, team_group, "YA", [CONCACAF, CAF, OFC])
-    addPlayoffConstraints(model, team_group, "ZA", [CONCACAF, CONMEBOL, AFC])
+    addPotConstraints(model, team_group)
+    addConfederationConstraints(model, team_group)
+    addTop2TeamsConstraints(model, team_group)
+    addTop4TeamsConstraints(model, team_group)
 
     addFixedAssignments(model, team_group, fixed_assignments) # For host teams and for simulations
-
     return model, team_group
 
 def check_feasibility(fixed_assignments):
@@ -185,7 +174,7 @@ def get_valid_group_for_team(team, current_assignments):
     occupied_groups = get_occupied_groups(pot, current_assignments)
 
     # Try each group in order, return first valid one
-    for group in range(1, 13):
+    for group in GROUPS:
         if group in occupied_groups:
             continue
 
