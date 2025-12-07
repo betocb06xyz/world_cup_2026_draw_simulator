@@ -9,6 +9,9 @@ from ortools.sat.python import cp_model
 # TEAM DATA
 # =============================================================================
 
+# Playoff teams (YA, ZA) appear in multiple confederations because their actual
+# confederation is unknown until the playoffs are decided. The solver treats them
+# as potentially belonging to any of those confederations for constraint purposes.
 TEAMS = {
     "CONCACAF": ["NA", "NB", "NC", "ND", "NE", "NF", "YA", "ZA"],
     "CONMEBOL": ["CA", "CB", "CC", "CD", "CE", "CF", "ZA"],
@@ -17,10 +20,14 @@ TEAMS = {
     "AFC":      ["AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "ZA"],
     "OFC":      ["XA", "YA"],
 }
-NUM_OF_TEAMS = 48
-# YA and ZA are PLAYOFF 1 and 2
 
-TEAMS_PER_GROUP = {
+NUM_OF_GROUPS = 12
+TEAMS_PER_GROUP = 4
+NUM_OF_TEAMS = NUM_OF_GROUPS * TEAMS_PER_GROUP
+
+# Confederation constraints per group. Playoff teams (YA, ZA) are handled through
+# their potential confederations in TEAMS, so no separate "PLAYOFF" entry is needed.
+CONFEDERATION_LIMITS = {
     "CONCACAF": {"min": 0, "max": 1},
     "CONMEBOL": {"min": 0, "max": 1},
     "CAF":      {"min": 0, "max": 1},
@@ -34,8 +41,6 @@ POT2 = ["CC", "CD", "CE", "EH", "EI", "EJ", "FA", "FB", "AA", "AB", "AC", "AD"]
 POT3 = ["ND", "CF", "EK", "EL", "FC", "FD", "FE", "FF", "FG", "AE", "AF", "AG"]
 POT4 = ["NE", "NF", "EM", "EN", "EO", "EP", "FH", "FI", "AH", "XA", "YA", "ZA"]
 ALL_POTS = [POT1, POT2, POT3, POT4]
-
-NUM_OF_GROUPS = 12
 GROUPS = range(1, NUM_OF_GROUPS + 1)
 
 TOP_2_TEAMS = ["CA", "EA"] # Top 2 teams, each one must be in different 'half'
@@ -112,8 +117,8 @@ def addConfederationConstraints(model, team_group):
                 t_in_g = addIntEqValFlag(model, team_group[team], group, f'{team}_in_{group}')
                 teams_in_group.append(t_in_g)
 
-            lb = TEAMS_PER_GROUP[confederation]["min"]
-            ub = TEAMS_PER_GROUP[confederation]["max"]
+            lb = CONFEDERATION_LIMITS[confederation]["min"]
+            ub = CONFEDERATION_LIMITS[confederation]["max"]
             model.Add(sum(teams_in_group) >= lb)
             model.Add(sum(teams_in_group) <= ub)
 
