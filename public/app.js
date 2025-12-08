@@ -80,7 +80,8 @@ function setupEventListeners() {
     document.getElementById('run-all-btn').addEventListener('click', () => runFullDraw(isRunningFullDraw));
 
     // Add click listeners to groups for two-click confirmation
-    for (let group = 1; group <= 12; group++) {
+    const numGroups = CONFIG.pots[1]?.length || 12;
+    for (let group = 1; group <= numGroups; group++) {
         const groupElement = document.getElementById(`group-${group}`);
         groupElement.addEventListener('click', (e) => handleGroupClick(group, e));
     }

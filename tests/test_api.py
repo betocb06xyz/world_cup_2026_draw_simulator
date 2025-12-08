@@ -123,6 +123,13 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response['team_categories']['UEFA 1'], 'uefa_playoff')
         self.assertEqual(response['team_categories']['UEFA 4'], 'uefa_playoff')
 
+        # Check ui config
+        self.assertIn('ui', response)
+        self.assertIn('display_orders', response['ui'])
+        self.assertIn('group_display_order', response['ui'])
+        self.assertIn('ORDER_1324', response['ui']['display_orders'])
+        self.assertEqual(response['ui']['group_display_order']['ORDER_1324'], [1, 4, 7, 10])
+
 
 if __name__ == "__main__":
     unittest.main()

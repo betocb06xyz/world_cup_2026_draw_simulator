@@ -64,5 +64,9 @@ export const actionQueue = {
     }
 };
 
-// Group letters constant
-export const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+/**
+ * Get group letter from group number (1 -> A, 2 -> B, etc.)
+ */
+export function getGroupLetter(groupNumber) {
+    return String.fromCharCode(64 + groupNumber);  // 65 = 'A', so 64 + 1 = 'A'
+}

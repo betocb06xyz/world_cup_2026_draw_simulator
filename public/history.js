@@ -2,7 +2,7 @@
  * Assignment log and undo functionality for FIFA 2026 World Cup Draw Simulator
  */
 
-import { CONFIG, drawState, isRunningFullDraw, GROUP_LETTERS } from './state.js';
+import { CONFIG, drawState, isRunningFullDraw, getGroupLetter } from './state.js';
 import { updateGroupsDisplay } from './ui-groups.js';
 import { updatePotStatus } from './ui-pots.js';
 import { clearHighlights } from './ui-highlights.js';
@@ -19,7 +19,7 @@ export function renderAssignmentLog() {
 
     for (const entry of drawState.history) {
         const teamName = entry.team;
-        const groupLetter = GROUP_LETTERS[entry.group - 1];
+        const groupLetter = getGroupLetter(entry.group);
         const flagCode = getFlag(teamName, overrides);
 
         const entryDiv = document.createElement('div');

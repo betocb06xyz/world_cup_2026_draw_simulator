@@ -31,7 +31,8 @@ def get_initial_state_response():
         'pots': get_pots(CONFIG),
         'hosts': CONFIG.get('hosts', {}),
         'display_overrides': CONFIG.get('display_overrides', {}),
-        'team_categories': CONFIG.get('team_categories', {})
+        'team_categories': CONFIG.get('team_categories', {}),
+        'ui': CONFIG.get('ui', {})
     }
 
 

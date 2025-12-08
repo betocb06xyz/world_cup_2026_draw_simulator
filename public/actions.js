@@ -3,14 +3,12 @@
  * These can be called directly from console for testing
  */
 
-import { drawState } from './state.js';
+import { drawState, getGroupLetter } from './state.js';
 import { getFlag, getDisplayName } from './flags.js';
 
 // Will be set by init
 let config = null;
 let api = null;
-
-const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
 /**
  * Initialize actions module with config and API
@@ -51,7 +49,7 @@ export function getTeamInfo(teamName) {
 }
 
 /**
- * Get which pot a team belongs to (1-4)
+ * Get which pot a team belongs to
  */
 export function getTeamPot(teamName) {
     if (!config) return null;
@@ -64,11 +62,12 @@ export function getTeamPot(teamName) {
 }
 
 /**
- * Get current pot number (1-4, or 0 if draw complete)
+ * Get current pot number (or 0 if draw complete)
  */
 export function getCurrentPot() {
     if (!config) return 0;
-    for (let pot = 1; pot <= 4; pot++) {
+    const numPots = config.pots.length;
+    for (let pot = 1; pot <= numPots; pot++) {
         const teams = config.pots[pot - 1];
         const assigned = teams.filter(t => t in drawState.assignments).length;
         if (assigned < teams.length) {
@@ -119,7 +118,7 @@ export function assignTeam(teamName, group) {
     drawState.history.push({ team: teamName, group, isHost: false });
     drawState.currentPot = getCurrentPot();
 
-    const groupLetter = GROUP_LETTERS[group - 1];
+    const groupLetter = getGroupLetter(group);
     return {
         success: true,
         message: `${teamName} assigned to Group ${groupLetter}`,
@@ -156,7 +155,7 @@ export async function selectTeam(teamName) {
     drawState.selectedTeam = teamName;
     drawState.validGroup = validGroup;
 
-    const groupLetter = GROUP_LETTERS[validGroup - 1];
+    const groupLetter = getGroupLetter(validGroup);
     return {
         success: true,
         teamName,
@@ -282,13 +281,15 @@ export async function runFullDraw(delayMs = 0) {
  * Get all groups with their assigned teams
  */
 export function getGroups() {
+    if (!config) return {};
+    const numGroups = config.pots[0]?.length || 12;
     const groups = {};
-    for (let i = 1; i <= 12; i++) {
-        groups[GROUP_LETTERS[i - 1]] = [];
+    for (let i = 1; i <= numGroups; i++) {
+        groups[getGroupLetter(i)] = [];
     }
 
     for (const [team, groupNum] of Object.entries(drawState.assignments)) {
-        const letter = GROUP_LETTERS[groupNum - 1];
+        const letter = getGroupLetter(groupNum);
         groups[letter].push({
             name: team,
             pot: getTeamPot(team)

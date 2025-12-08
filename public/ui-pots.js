@@ -11,8 +11,9 @@ export function populatePots() {
     if (!CONFIG) return;
 
     const overrides = CONFIG.display_overrides || {};
+    const numPots = Object.keys(CONFIG.pots).length;
 
-    for (let pot = 1; pot <= 4; pot++) {
+    for (let pot = 1; pot <= numPots; pot++) {
         const teams = CONFIG.pots[pot];
         const container = document.getElementById(`pot-${pot}-teams`);
         container.innerHTML = '';
@@ -75,8 +76,9 @@ export function updatePotStatus() {
     if (!CONFIG) return;
 
     const overrides = CONFIG.display_overrides || {};
+    const numPots = Object.keys(CONFIG.pots).length;
 
-    for (let pot = 1; pot <= 4; pot++) {
+    for (let pot = 1; pot <= numPots; pot++) {
         const teams = CONFIG.pots[pot];
         const assigned = teams.filter(t => t in drawState.assignments).length;
         const total = teams.length;

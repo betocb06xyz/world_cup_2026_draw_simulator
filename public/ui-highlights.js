@@ -2,8 +2,8 @@
  * Highlight and selection functions for FIFA 2026 World Cup Draw Simulator
  */
 
-import { DISPLAY_ORDERS, getDisplayOrderForGroup } from './config.js';
-import { CONFIG, drawState, actionQueue, GROUP_LETTERS } from './state.js';
+import { getDisplayOrders, getDisplayOrderForGroup } from './config.js';
+import { CONFIG, drawState, actionQueue, getGroupLetter } from './state.js';
 import { getValidGroupForTeam } from './api.js';
 import { updateGroupsDisplay } from './ui-groups.js';
 import { updatePotStatus } from './ui-pots.js';
@@ -15,7 +15,8 @@ import { updateCurrentPot, updateDrawStatus } from './draw.js';
  */
 function getTeamPot(teamName) {
     if (!CONFIG) return null;
-    for (let pot = 1; pot <= 4; pot++) {
+    const numPots = Object.keys(CONFIG.pots).length;
+    for (let pot = 1; pot <= numPots; pot++) {
         if (CONFIG.pots[pot].includes(teamName)) {
             return pot;
         }
@@ -75,7 +76,7 @@ async function processTeamClick(teamName) {
         // Highlight valid group and the specific slot
         highlightValidGroup(validGroup, pot);
 
-        const groupLetter = GROUP_LETTERS[validGroup - 1];
+        const groupLetter = getGroupLetter(validGroup);
         updateDrawStatus(`${teamName} → Group ${groupLetter}. Click team or group to confirm.`);
 
     } catch (error) {
@@ -125,7 +126,8 @@ function highlightValidGroup(group, pot) {
         // Highlight the specific slot based on pot and group display order
         const slots = groupElement.querySelectorAll('.team-slot');
         const orderKey = getDisplayOrderForGroup(group);
-        const slotIndex = DISPLAY_ORDERS[orderKey][pot];
+        const displayOrders = getDisplayOrders();
+        const slotIndex = displayOrders[orderKey][pot];
 
         if (slots[slotIndex]) {
             slots[slotIndex].classList.add('highlight-slot');
@@ -172,7 +174,7 @@ export function assignTeamToGroup(teamName, group) {
     updateCurrentPot();
     updatePotStatus();
 
-    const groupLetter = GROUP_LETTERS[group - 1];
+    const groupLetter = getGroupLetter(group);
 
     // Add to history
     addToHistory(teamName, group, false);

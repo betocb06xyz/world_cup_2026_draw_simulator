@@ -2,16 +2,17 @@
  * Group display and slot rendering for FIFA 2026 World Cup Draw Simulator
  */
 
-import { DISPLAY_ORDERS, SLOT_TO_POT, getDisplayOrderForGroup } from './config.js';
+import { getDisplayOrders, getSlotToPot, getDisplayOrderForGroup } from './config.js';
 import { CONFIG, drawState } from './state.js';
 import { getFlag, getDisplayName } from './flags.js';
 
 /**
- * Get pot number for a team (1-4)
+ * Get pot number for a team
  */
 function getTeamPot(teamName) {
     if (!CONFIG) return null;
-    for (let pot = 1; pot <= 4; pot++) {
+    const numPots = Object.keys(CONFIG.pots).length;
+    for (let pot = 1; pot <= numPots; pot++) {
         if (CONFIG.pots[pot].includes(teamName)) {
             return pot;
         }
@@ -31,14 +32,17 @@ export function updateGroupsDisplay() {
     if (!CONFIG) return;
 
     const overrides = CONFIG.display_overrides || {};
+    const numGroups = CONFIG.pots[1]?.length || 12;
+    const displayOrders = getDisplayOrders();
+    const slotToPotMap = getSlotToPot();
 
-    for (let group = 1; group <= 12; group++) {
+    for (let group = 1; group <= numGroups; group++) {
         const groupElement = document.getElementById(`group-${group}`);
         const slots = groupElement.querySelectorAll('.team-slot');
 
         const orderKey = getDisplayOrderForGroup(group);
-        const slotToPot = SLOT_TO_POT[orderKey];
-        const potToSlot = DISPLAY_ORDERS[orderKey];
+        const slotToPot = slotToPotMap[orderKey];
+        const potToSlot = displayOrders[orderKey];
 
         // Clear slots and show pot numbers for empty ones
         slots.forEach((slot, index) => {

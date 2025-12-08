@@ -38,12 +38,13 @@ export async function getValidGroupForTeam(teamName) {
 export async function getInitialState() {
     const result = await callAPI('get_initial_state');
 
-    // Store config (pots, hosts, display_overrides, team_categories)
+    // Store config (pots, hosts, display_overrides, team_categories, ui)
     setConfig({
         pots: result.pots,
         hosts: result.hosts,
         display_overrides: result.display_overrides,
-        team_categories: result.team_categories
+        team_categories: result.team_categories,
+        ui: result.ui
     });
 
     return result.assignments;
@@ -51,7 +52,8 @@ export async function getInitialState() {
 
 export function getCurrentPot() {
     if (!CONFIG) return 0;
-    for (let pot = 1; pot <= 4; pot++) {
+    const numPots = Object.keys(CONFIG.pots).length;
+    for (let pot = 1; pot <= numPots; pot++) {
         const teams = CONFIG.pots[pot];
         const assigned = teams.filter(t => t in drawState.assignments).length;
         if (assigned < teams.length) {
