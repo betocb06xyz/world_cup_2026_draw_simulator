@@ -1,10 +1,15 @@
 """
 FIFA 2026 World Cup Draw - Vercel Serverless API Endpoint
 """
-
 from http.server import BaseHTTPRequestHandler
 import json
+import os
+from api.config import load_config
 from api.solver import get_valid_group_for_team, get_initial_state, get_pots
+
+# Load config once at module initialization
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'draw_config.yaml')
+CONFIG = load_config(CONFIG_PATH)
 
 
 def get_valid_group_response(data):
@@ -12,17 +17,29 @@ def get_valid_group_response(data):
     assignments = {str(k): int(v) for k, v in raw_assignments.items()}
 
     team = data.get('team')
-    valid_group = get_valid_group_for_team(team, assignments)
+    valid_group = get_valid_group_for_team(CONFIG, team, assignments)
 
     return {
         'team': team,
         'valid_group': valid_group
     }
 
+
 def get_initial_state_response():
+    # Build team -> confederation mapping
+    team_confederations = {}
+    for confed, teams in CONFIG.get('confederations', {}).items():
+        for team in teams:
+            # Don't overwrite if already set (playoffs appear in multiple)
+            if team not in team_confederations:
+                team_confederations[team] = confed
+
     return {
-        'assignments': get_initial_state(),
-        'pots': get_pots()
+        'assignments': get_initial_state(CONFIG),
+        'pots': get_pots(CONFIG),
+        'hosts': CONFIG.get('hosts', {}),
+        'display_overrides': CONFIG.get('display_overrides', {}),
+        'team_confederations': team_confederations
     }
 
 

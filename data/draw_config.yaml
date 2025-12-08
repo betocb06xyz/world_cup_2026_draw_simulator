@@ -1,0 +1,54 @@
+confederations:
+  CONCACAF: [Mexico, Canada, USA, Panama, Curacao, Haiti, FIFA 1, FIFA 2]
+  CONMEBOL: [Argentina, Brazil, Uruguay, Colombia, Ecuador, Paraguay, FIFA 2]
+  UEFA: [Spain, France, England, Germany, Portugal, Netherlands, Belgium, Austria, Croatia, Switzerland, Norway, Scotland, UEFA 1, UEFA 2, UEFA 3, UEFA 4]
+  CAF: [Senegal, Morocco, Tunisia, Ivory Coast, South Africa, Egypt, Algeria, Ghana, Cape Verde, FIFA 1]
+  AFC: [Japan, South Korea, Iran, Australia, Saudi Arabia, Qatar, Uzbekistan, Jordan, FIFA 2]
+  OFC: [New Zealand, FIFA 1]
+
+confederation_limits:
+  CONCACAF: {min: 0, max: 1}
+  CONMEBOL: {min: 0, max: 1}
+  UEFA: {min: 1, max: 2}
+  CAF: {min: 0, max: 1}
+  AFC: {min: 0, max: 1}
+  OFC: {min: 0, max: 1}
+
+pots:
+  - [Mexico, Canada, USA, Argentina, Brazil, Spain, France, England, Germany, Portugal, Netherlands, Belgium]
+  - [Uruguay, Colombia, Ecuador, Austria, Croatia, Switzerland, Senegal, Morocco, Japan, South Korea, Iran, Australia]
+  - [Panama, Paraguay, Norway, Scotland, Tunisia, Ivory Coast, South Africa, Egypt, Algeria, Saudi Arabia, Qatar, Uzbekistan]
+  - [Curacao, Haiti, Ghana, Cape Verde, Jordan, New Zealand, UEFA 1, UEFA 2, UEFA 3, UEFA 4, FIFA 1, FIFA 2]
+
+pathway_restrictions:
+  top_2:
+    teams: [Argentina, Spain]
+    pathways: [[1, 2, 3, 10, 11, 12], [4, 5, 6, 7, 8, 9]]
+  top_4:
+    teams: [Argentina, Spain, France, England]
+    pathways: [[1, 3, 12], [2, 10, 11], [4, 7, 8], [5, 6, 9]]
+
+hosts:
+  Mexico: 1
+  Canada: 2
+  USA: 4
+
+display_overrides:
+  FIFA 1:
+    flag: fifa
+    display_name: "FIFA 1: COD/JAM/NCL"
+  FIFA 2:
+    flag: fifa
+    display_name: "FIFA 2: IRQ/BOL/SUR"
+  UEFA 1:
+    flag: uefa
+    display_name: "UEFA 1: ITA/WAL/NIR/BIH"
+  UEFA 2:
+    flag: uefa
+    display_name: "UEFA 2: UKR/POL/SWE/ALB"
+  UEFA 3:
+    flag: uefa
+    display_name: "UEFA 3: TUR/ROU/SVK/KOS"
+  UEFA 4:
+    flag: uefa
+    display_name: "UEFA 4: DEN/CZE/MKD/IRL"

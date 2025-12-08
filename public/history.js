@@ -2,11 +2,12 @@
  * Assignment log and undo functionality for FIFA 2026 World Cup Draw Simulator
  */
 
-import { drawState, isRunningFullDraw } from './state.js';
+import { CONFIG, drawState, isRunningFullDraw, GROUP_LETTERS } from './state.js';
 import { updateGroupsDisplay } from './ui-groups.js';
 import { updatePotStatus } from './ui-pots.js';
 import { clearHighlights } from './ui-highlights.js';
 import { updateCurrentPot, updateDrawStatus } from './draw.js';
+import { getFlag, getDisplayName } from './flags.js';
 
 // ===== Assignment Log Functions =====
 // Renders the entire log from drawState.history (single source of truth)
@@ -14,21 +15,24 @@ export function renderAssignmentLog() {
     const logContent = document.getElementById('assignment-log-content');
     logContent.innerHTML = '';
 
+    const overrides = CONFIG?.display_overrides || {};
+
     for (const entry of drawState.history) {
-        const teamData = TEAM_DATA[entry.team];
+        const teamName = entry.team;
         const groupLetter = GROUP_LETTERS[entry.group - 1];
+        const flagCode = getFlag(teamName, overrides);
 
         const entryDiv = document.createElement('div');
         entryDiv.className = 'assignment-log-entry' + (entry.isHost ? ' host' : '');
 
         const flag = document.createElement('img');
         flag.className = 'assignment-log-flag';
-        flag.src = `flags/${teamData.flag}.svg`;
-        flag.alt = teamData.name;
+        flag.src = `flags/${flagCode}.svg`;
+        flag.alt = teamName;
         flag.onerror = () => { flag.src = 'flags/placeholder.svg'; };
 
-        const teamName = document.createElement('span');
-        teamName.textContent = teamData.name;
+        const teamNameSpan = document.createElement('span');
+        teamNameSpan.textContent = teamName;
 
         const arrow = document.createElement('span');
         arrow.className = 'assignment-log-arrow';
@@ -39,7 +43,7 @@ export function renderAssignmentLog() {
         groupName.textContent = `Group ${groupLetter}`;
 
         entryDiv.appendChild(flag);
-        entryDiv.appendChild(teamName);
+        entryDiv.appendChild(teamNameSpan);
         entryDiv.appendChild(arrow);
         entryDiv.appendChild(groupName);
 
@@ -50,8 +54,8 @@ export function renderAssignmentLog() {
     logContent.scrollTop = logContent.scrollHeight;
 }
 
-export function addToHistory(teamCode, group, isHost = false) {
-    drawState.history.push({ team: teamCode, group: group, isHost: isHost });
+export function addToHistory(teamName, group, isHost = false) {
+    drawState.history.push({ team: teamName, group: group, isHost: isHost });
     renderAssignmentLog();
 }
 
@@ -93,8 +97,7 @@ export function undoLastAssignment() {
     updatePotStatus();
     clearHighlights();
 
-    const teamData = TEAM_DATA[lastEntry.team];
-    updateDrawStatus(`Undid ${teamData.name} assignment.`);
+    updateDrawStatus(`Undid ${lastEntry.team} assignment.`);
 }
 
 export function canUndo() {

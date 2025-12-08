@@ -3,31 +3,44 @@
  */
 
 import { DISPLAY_ORDERS, getDisplayOrderForGroup } from './config.js';
-import { drawState, actionQueue } from './state.js';
+import { CONFIG, drawState, actionQueue, GROUP_LETTERS } from './state.js';
 import { getValidGroupForTeam } from './api.js';
 import { updateGroupsDisplay } from './ui-groups.js';
 import { updatePotStatus } from './ui-pots.js';
 import { addToHistory } from './history.js';
 import { updateCurrentPot, updateDrawStatus } from './draw.js';
 
-// ===== Team Click Handler =====
-export function handleTeamClick(teamCode) {
-    actionQueue.enqueue(() => processTeamClick(teamCode));
+/**
+ * Get pot number for a team (1-4)
+ */
+function getTeamPot(teamName) {
+    if (!CONFIG) return null;
+    for (let pot = 1; pot <= 4; pot++) {
+        if (CONFIG.pots[pot].includes(teamName)) {
+            return pot;
+        }
+    }
+    return null;
 }
 
-async function processTeamClick(teamCode) {
-    const teamData = TEAM_DATA[teamCode];
+// ===== Team Click Handler =====
+export function handleTeamClick(teamName) {
+    actionQueue.enqueue(() => processTeamClick(teamName));
+}
+
+async function processTeamClick(teamName) {
+    const pot = getTeamPot(teamName);
 
     // Skip if team already assigned or not in current pot
-    if (teamData.pot !== drawState.currentPot || teamCode in drawState.assignments) {
+    if (pot !== drawState.currentPot || teamName in drawState.assignments) {
         return;
     }
 
     // If clicking the same team again while it's selected with a valid group, confirm immediately
-    if (drawState.selectedTeam === teamCode && drawState.validGroup !== null) {
+    if (drawState.selectedTeam === teamName && drawState.validGroup !== null) {
         const group = drawState.validGroup;  // Save before clearHighlights resets it
         clearHighlights();
-        assignTeamToGroup(teamCode, group);
+        assignTeamToGroup(teamName, group);
         return;
     }
 
@@ -37,22 +50,22 @@ async function processTeamClick(teamCode) {
     }
 
     // Mark this team as selected (validGroup will be set after API call)
-    drawState.selectedTeam = teamCode;
+    drawState.selectedTeam = teamName;
     drawState.validGroup = null;
 
-    updateDrawStatus(`Checking valid group for ${teamData.name}...`);
-    highlightSelectedTeam(teamCode);
+    updateDrawStatus(`Checking valid group for ${teamName}...`);
+    highlightSelectedTeam(teamName);
 
     try {
-        const validGroup = await getValidGroupForTeam(teamCode);
+        const validGroup = await getValidGroupForTeam(teamName);
 
         // Check if user switched to a different team while we were fetching
-        if (drawState.selectedTeam !== teamCode) {
+        if (drawState.selectedTeam !== teamName) {
             return;
         }
 
         if (validGroup === null) {
-            updateDrawStatus(`ERROR: No valid group for ${teamData.name}`);
+            updateDrawStatus(`ERROR: No valid group for ${teamName}`);
             clearHighlights();
             return;
         }
@@ -60,10 +73,10 @@ async function processTeamClick(teamCode) {
         drawState.validGroup = validGroup;
 
         // Highlight valid group and the specific slot
-        highlightValidGroup(validGroup, teamData.pot);
+        highlightValidGroup(validGroup, pot);
 
         const groupLetter = GROUP_LETTERS[validGroup - 1];
-        updateDrawStatus(`${teamData.name} → Group ${groupLetter}. Click team or group to confirm.`);
+        updateDrawStatus(`${teamName} → Group ${groupLetter}. Click team or group to confirm.`);
 
     } catch (error) {
         console.error('Error in team click:', error);
@@ -73,14 +86,14 @@ async function processTeamClick(teamCode) {
 }
 
 // ===== Highlight Functions =====
-function highlightSelectedTeam(teamCode) {
+function highlightSelectedTeam(teamName) {
     // Remove previous selection
     document.querySelectorAll('.team-item.selected').forEach(el => {
         el.classList.remove('selected');
     });
 
     // Add selection to current team
-    const teamItem = document.querySelector(`.team-item[data-team="${teamCode}"]`);
+    const teamItem = document.querySelector(`.team-item[data-team="${teamName}"]`);
     if (teamItem) {
         teamItem.classList.add('selected');
     }
@@ -144,26 +157,25 @@ export function handleGroupClick(group, event) {
         return;
     }
 
-    const teamCode = drawState.selectedTeam;
+    const teamName = drawState.selectedTeam;
     actionQueue.enqueue(() => {
         clearHighlights();
-        assignTeamToGroup(teamCode, group);
+        assignTeamToGroup(teamName, group);
     });
 }
 
 // ===== Assign Team to Group =====
-export function assignTeamToGroup(teamCode, group) {
-    drawState.assignments[teamCode] = group;
+export function assignTeamToGroup(teamName, group) {
+    drawState.assignments[teamName] = group;
     clearHighlights();
     updateGroupsDisplay();
     updateCurrentPot();
     updatePotStatus();
 
-    const teamData = TEAM_DATA[teamCode];
     const groupLetter = GROUP_LETTERS[group - 1];
 
     // Add to history
-    addToHistory(teamCode, group, false);
+    addToHistory(teamName, group, false);
 
-    updateDrawStatus(`${teamData.name} assigned to Group ${groupLetter}`);
+    updateDrawStatus(`${teamName} assigned to Group ${groupLetter}`);
 }

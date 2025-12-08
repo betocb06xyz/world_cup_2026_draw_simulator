@@ -3,9 +3,35 @@
  */
 
 import { DISPLAY_ORDERS, SLOT_TO_POT, getDisplayOrderForGroup } from './config.js';
-import { drawState } from './state.js';
+import { CONFIG, drawState } from './state.js';
+import { getFlag, getDisplayName } from './flags.js';
+
+/**
+ * Get pot number for a team (1-4)
+ */
+function getTeamPot(teamName) {
+    if (!CONFIG) return null;
+    for (let pot = 1; pot <= 4; pot++) {
+        if (CONFIG.pots[pot].includes(teamName)) {
+            return pot;
+        }
+    }
+    return null;
+}
+
+/**
+ * Check if team is a host
+ */
+function isHost(teamName) {
+    if (!CONFIG) return false;
+    return teamName in CONFIG.hosts;
+}
 
 export function updateGroupsDisplay() {
+    if (!CONFIG) return;
+
+    const overrides = CONFIG.display_overrides || {};
+
     for (let group = 1; group <= 12; group++) {
         const groupElement = document.getElementById(`group-${group}`);
         const slots = groupElement.querySelectorAll('.team-slot');
@@ -28,34 +54,38 @@ export function updateGroupsDisplay() {
         });
 
         // Fill in assigned teams (overwrites pot number)
-        for (const [teamCode, assignedGroup] of Object.entries(drawState.assignments)) {
+        for (const [teamName, assignedGroup] of Object.entries(drawState.assignments)) {
             if (assignedGroup === group) {
-                const teamData = TEAM_DATA[teamCode];
-                const pot = teamData.pot;
+                const pot = getTeamPot(teamName);
+                if (!pot) continue;
+
                 const slotIndex = potToSlot[pot];
                 const slot = slots[slotIndex];
 
                 // Clear the pot number placeholder
                 slot.innerHTML = '';
 
+                const flagCode = getFlag(teamName, overrides);
+                const displayName = getDisplayName(teamName, overrides);
+
                 const content = document.createElement('div');
                 content.className = 'team-slot-content';
 
                 const flag = document.createElement('img');
                 flag.className = 'team-slot-flag';
-                flag.src = `flags/${teamData.flag}.svg`;
-                flag.alt = teamData.name;
+                flag.src = `flags/${flagCode}.svg`;
+                flag.alt = teamName;
                 flag.onerror = () => { flag.src = 'flags/placeholder.svg'; };
+
+                const confederation = CONFIG.team_confederations?.[teamName] || '';
 
                 const name = document.createElement('span');
                 name.className = 'team-slot-name';
-                // For playoff teams, show abbreviations instead of confederation
-                if (teamData.playoff && teamData.displayName) {
-                    const parts = teamData.displayName.split(': ');
-                    const abbrev = parts.length > 1 ? parts[1] : teamData.confederation;
-                    name.textContent = `${teamData.name} - ${abbrev}`;
+                // Show "Team - Confederation" format, or display_name for playoffs
+                if (overrides[teamName]?.display_name) {
+                    name.textContent = displayName;
                 } else {
-                    name.textContent = `${teamData.name} - ${teamData.confederation}`;
+                    name.textContent = `${teamName} - ${confederation}`;
                 }
 
                 content.appendChild(flag);
@@ -63,7 +93,7 @@ export function updateGroupsDisplay() {
                 slot.appendChild(content);
                 slot.classList.add('filled');
 
-                if (teamData.host) {
+                if (isHost(teamName)) {
                     slot.classList.add('host');
                 }
             }

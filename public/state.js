@@ -1,20 +1,21 @@
 /**
- * Global state and action queue for FIFA 2026 World Cup Draw Simulator
+ * Global state for FIFA 2026 World Cup Draw Simulator
  */
 
-// ===== Global State =====
-export let POTS = null;  // Loaded from API
+// Config loaded from API
+export let CONFIG = null;
 
-export function setPots(pots) {
-    POTS = pots;
+export function setConfig(config) {
+    CONFIG = config;
 }
 
+// Draw state
 export const drawState = {
-    assignments: {},
+    assignments: {},      // { teamName: groupNumber }
     currentPot: 1,
-    selectedTeam: null,
-    validGroup: null,      // Valid group for selected team
-    history: []            // Stack of team codes for undo (excludes hosts)
+    selectedTeam: null,   // team name
+    validGroup: null,     // group number (1-12)
+    history: []           // [{ team: name, group: number, isHost: boolean }]
 };
 
 // Flag for full draw mode
@@ -24,7 +25,7 @@ export function setIsRunningFullDraw(value) {
     isRunningFullDraw = value;
 }
 
-// ===== Action Queue (prevents race conditions) =====
+// Action queue (prevents race conditions)
 export const actionQueue = {
     queue: [],
     processing: false,
@@ -53,7 +54,7 @@ export const actionQueue = {
             console.error('Action failed:', error);
         }
 
-        this.queue.shift();  // dequeue after completion
+        this.queue.shift();
         this.processing = false;
         this.processNext();
     },
@@ -62,3 +63,6 @@ export const actionQueue = {
         return this.cancelRequested;
     }
 };
+
+// Group letters constant
+export const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];

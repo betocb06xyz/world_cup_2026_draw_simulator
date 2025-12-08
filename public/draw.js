@@ -2,13 +2,13 @@
  * Draw logic for FIFA 2026 World Cup Draw Simulator
  */
 
-import { drawState, actionQueue, POTS, setIsRunningFullDraw } from './state.js';
+import { CONFIG, drawState, actionQueue, setIsRunningFullDraw } from './state.js';
 import { getCurrentPot, getValidGroupForTeam } from './api.js';
 import { assignTeamToGroup } from './ui-highlights.js';
 
 // ===== Helper Functions =====
 export function updateCurrentPot() {
-    drawState.currentPot = getCurrentPot(drawState.assignments);
+    drawState.currentPot = getCurrentPot();
 }
 
 export function updateDrawStatus(message) {
@@ -21,7 +21,7 @@ export function drawOneTeam() {
 }
 
 export async function processDrawOneTeam() {
-    const currentPot = getCurrentPot(drawState.assignments);
+    const currentPot = getCurrentPot();
     if (currentPot === 0) {
         updateDrawStatus("Draw complete!");
         return;
@@ -30,7 +30,7 @@ export async function processDrawOneTeam() {
     updateDrawStatus("Drawing one team...");
 
     try {
-        const potTeams = POTS[currentPot];
+        const potTeams = CONFIG.pots[currentPot];
         const unassigned = potTeams.filter(t => !(t in drawState.assignments));
 
         if (unassigned.length === 0) {
@@ -38,15 +38,15 @@ export async function processDrawOneTeam() {
             return;
         }
 
-        const teamCode = unassigned[Math.floor(Math.random() * unassigned.length)];
-        const validGroup = await getValidGroupForTeam(teamCode);
+        const teamName = unassigned[Math.floor(Math.random() * unassigned.length)];
+        const validGroup = await getValidGroupForTeam(teamName);
 
         if (validGroup === null) {
-            updateDrawStatus(`ERROR: No valid group for ${TEAM_DATA[teamCode].name}`);
+            updateDrawStatus(`ERROR: No valid group for ${teamName}`);
             return;
         }
 
-        assignTeamToGroup(teamCode, validGroup);
+        assignTeamToGroup(teamName, validGroup);
 
     } catch (error) {
         console.error("Error drawing team:", error);
@@ -87,7 +87,7 @@ async function processFullDraw() {
         let iterations = 0;
         const maxIterations = 100;
 
-        while (getCurrentPot(drawState.assignments) > 0 && iterations < maxIterations) {
+        while (getCurrentPot() > 0 && iterations < maxIterations) {
             // Check for cancellation before each team
             if (actionQueue.shouldStop()) {
                 updateDrawStatus("Draw stopped by user.");

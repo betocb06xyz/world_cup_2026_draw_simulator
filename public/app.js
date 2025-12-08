@@ -3,7 +3,7 @@
  * Main application entry point
  */
 
-import { drawState, actionQueue, isRunningFullDraw } from './state.js';
+import { CONFIG, drawState, actionQueue, isRunningFullDraw } from './state.js';
 import { getInitialState } from './api.js';
 import { populatePots, updatePotStatus } from './ui-pots.js';
 import { updateGroupsDisplay } from './ui-groups.js';
@@ -37,7 +37,7 @@ async function init() {
 async function initializeDraw() {
     updateLoadingMessage('Connecting to solver...');
 
-    // Get initial state from API
+    // Get initial state from API (this also loads CONFIG)
     drawState.assignments = await getInitialState();
     drawState.currentPot = 1;
     drawState.selectedTeam = null;
@@ -51,9 +51,9 @@ async function initializeDraw() {
 
     // Clear history and add hosts
     clearHistory();
-    addToHistory("NA", 1, true);
-    addToHistory("NB", 2, true);
-    addToHistory("NC", 4, true);
+    for (const [teamName, group] of Object.entries(CONFIG.hosts)) {
+        addToHistory(teamName, group, true);
+    }
 
     updateDrawStatus("Ready to begin drawing. Hosts pre-assigned to Groups A, B, and D.");
 }

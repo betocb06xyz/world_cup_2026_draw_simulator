@@ -1,0 +1,57 @@
+# Actual FIFA 2026 World Cup Draw results
+# December 5th, 2025
+# Teams listed in the order they were drawn
+
+draw_sequence:
+  # Pot 1
+  - [Brazil, C]
+  - [Germany, E]
+  - [Netherlands, F]
+  - [Belgium, G]
+  - [Spain, H]
+  - [Argentina, J]
+  - [France, I]
+  - [Portugal, K]
+  - [England, L]
+
+  # Pot 2
+  - [South Korea, A]
+  - [Switzerland, B]
+  - [Morocco, C]
+  - [Australia, D]
+  - [Ecuador, E]
+  - [Japan, F]
+  - [Iran, G]
+  - [Uruguay, H]
+  - [Senegal, I]
+  - [Austria, J]
+  - [Colombia, K]
+  - [Croatia, L]
+
+  # Pot 3
+  - [South Africa, A]
+  - [Qatar, B]
+  - [Paraguay, D]
+  - [Ivory Coast, E]
+  - [Tunisia, F]
+  - [Egypt, G]
+  - [Scotland, C]
+  - [Saudi Arabia, H]
+  - [Algeria, J]
+  - [Uzbekistan, K]
+  - [Panama, L]
+  - [Norway, I]
+
+  # Pot 4
+  - [UEFA 4, A]
+  - [UEFA 1, B]
+  - [Haiti, C]
+  - [Curacao, E]
+  - [FIFA 2, I]
+  - [Cape Verde, H]
+  - [UEFA 3, D]
+  - [UEFA 2, F]
+  - [Jordan, J]
+  - [FIFA 1, K]
+  - [Ghana, L]
+  - [New Zealand, G]
