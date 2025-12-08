@@ -38,12 +38,12 @@ export async function getValidGroupForTeam(teamName) {
 export async function getInitialState() {
     const result = await callAPI('get_initial_state');
 
-    // Store config (pots, hosts, display_overrides, team_confederations)
+    // Store config (pots, hosts, display_overrides, team_categories)
     setConfig({
         pots: result.pots,
         hosts: result.hosts,
         display_overrides: result.display_overrides,
-        team_confederations: result.team_confederations
+        team_categories: result.team_categories
     });
 
     return result.assignments;

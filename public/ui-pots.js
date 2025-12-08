@@ -32,7 +32,7 @@ function createTeamItem(teamName, pot, overrides) {
 
     const flagCode = getFlag(teamName, overrides);
     const displayName = getDisplayName(teamName, overrides);
-    const confederation = CONFIG.team_confederations?.[teamName] || '';
+    const category = CONFIG.team_categories?.[teamName] || '';
 
     const flag = document.createElement('img');
     flag.className = 'team-flag';
@@ -48,13 +48,13 @@ function createTeamItem(teamName, pot, overrides) {
     name.textContent = teamName;
 
     const subtitle = document.createElement('span');
-    subtitle.className = 'team-confederation';
-    // For playoff teams with display_name, show the teams list instead of confederation
+    subtitle.className = 'team-category';
+    // For playoff teams with display_name, show the teams list instead of category
     if (overrides[teamName]?.display_name) {
         const parts = displayName.split(': ');
-        subtitle.textContent = parts.length > 1 ? parts[1] : confederation;
+        subtitle.textContent = parts.length > 1 ? parts[1] : category;
     } else {
-        subtitle.textContent = confederation;
+        subtitle.textContent = category;
     }
 
     textContainer.appendChild(name);

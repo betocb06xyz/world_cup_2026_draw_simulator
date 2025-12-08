@@ -77,15 +77,15 @@ export function updateGroupsDisplay() {
                 flag.alt = teamName;
                 flag.onerror = () => { flag.src = 'flags/placeholder.svg'; };
 
-                const confederation = CONFIG.team_confederations?.[teamName] || '';
+                const category = CONFIG.team_categories?.[teamName] || '';
 
                 const name = document.createElement('span');
                 name.className = 'team-slot-name';
-                // Show "Team - Confederation" format, or display_name for playoffs
+                // Show "Team - Category" format, or display_name for playoffs
                 if (overrides[teamName]?.display_name) {
                     name.textContent = displayName;
                 } else {
-                    name.textContent = `${teamName} - ${confederation}`;
+                    name.textContent = `${teamName} - ${category}`;
                 }
 
                 content.appendChild(flag);

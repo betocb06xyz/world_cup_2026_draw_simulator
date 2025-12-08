@@ -37,18 +37,24 @@ display_overrides:
   FIFA 1:
     flag: fifa
     display_name: "FIFA 1: COD/JAM/NCL"
+    category: fifa_playoff
   FIFA 2:
     flag: fifa
     display_name: "FIFA 2: IRQ/BOL/SUR"
+    category: fifa_playoff
   UEFA 1:
     flag: uefa
     display_name: "UEFA 1: ITA/WAL/NIR/BIH"
+    category: uefa_playoff
   UEFA 2:
     flag: uefa
     display_name: "UEFA 2: UKR/POL/SWE/ALB"
+    category: uefa_playoff
   UEFA 3:
     flag: uefa
     display_name: "UEFA 3: TUR/ROU/SVK/KOS"
+    category: uefa_playoff
   UEFA 4:
     flag: uefa
     display_name: "UEFA 4: DEN/CZE/MKD/IRL"
+    category: uefa_playoff

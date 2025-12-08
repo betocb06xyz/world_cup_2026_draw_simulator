@@ -26,20 +26,12 @@ def get_valid_group_response(data):
 
 
 def get_initial_state_response():
-    # Build team -> confederation mapping
-    team_confederations = {}
-    for confed, teams in CONFIG.get('confederations', {}).items():
-        for team in teams:
-            # Don't overwrite if already set (playoffs appear in multiple)
-            if team not in team_confederations:
-                team_confederations[team] = confed
-
     return {
         'assignments': get_initial_state(CONFIG),
         'pots': get_pots(CONFIG),
         'hosts': CONFIG.get('hosts', {}),
         'display_overrides': CONFIG.get('display_overrides', {}),
-        'team_confederations': team_confederations
+        'team_categories': CONFIG.get('team_categories', {})
     }
 
 

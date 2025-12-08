@@ -94,7 +94,7 @@ class TestAPI(unittest.TestCase):
         self.assertIsInstance(response['pots'], dict)
         self.assertIsInstance(response['hosts'], dict)
         self.assertIsInstance(response['display_overrides'], dict)
-        self.assertIsInstance(response['team_confederations'], dict)
+        self.assertIsInstance(response['team_categories'], dict)
 
         # Check pots have correct count
         self.assertEqual(len(response['pots']), 4)
@@ -103,17 +103,25 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(len(response['pots'][3]), 12)
         self.assertEqual(len(response['pots'][4]), 12)
 
-        # Check display_overrides for playoff teams
+        # Check display_overrides for playoff teams (flag, display_name, category)
         self.assertIn('FIFA 1', response['display_overrides'])
         self.assertIn('UEFA 1', response['display_overrides'])
         self.assertEqual(response['display_overrides']['FIFA 1']['flag'], 'fifa')
+        self.assertEqual(response['display_overrides']['FIFA 1']['category'], 'fifa_playoff')
         self.assertEqual(response['display_overrides']['UEFA 1']['flag'], 'uefa')
+        self.assertEqual(response['display_overrides']['UEFA 1']['category'], 'uefa_playoff')
 
-        # Check team_confederations
-        self.assertEqual(response['team_confederations']['Brazil'], 'CONMEBOL')
-        self.assertEqual(response['team_confederations']['Spain'], 'UEFA')
-        self.assertEqual(response['team_confederations']['Japan'], 'AFC')
-        self.assertEqual(response['team_confederations']['Mexico'], 'CONCACAF')
+        # Check team_categories - regular teams get their confederation
+        self.assertEqual(response['team_categories']['Brazil'], 'CONMEBOL')
+        self.assertEqual(response['team_categories']['Spain'], 'UEFA')
+        self.assertEqual(response['team_categories']['Japan'], 'AFC')
+        self.assertEqual(response['team_categories']['Mexico'], 'CONCACAF')
+
+        # Check team_categories - playoff teams get explicit category
+        self.assertEqual(response['team_categories']['FIFA 1'], 'fifa_playoff')
+        self.assertEqual(response['team_categories']['FIFA 2'], 'fifa_playoff')
+        self.assertEqual(response['team_categories']['UEFA 1'], 'uefa_playoff')
+        self.assertEqual(response['team_categories']['UEFA 4'], 'uefa_playoff')
 
 
 if __name__ == "__main__":
