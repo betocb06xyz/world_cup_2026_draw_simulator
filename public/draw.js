@@ -1,16 +1,15 @@
 /**
- * Draw logic for FIFA 2026 World Cup Draw Simulator
+ * Draw logic for FIFA World Cup Draw Simulator
+ *
+ * Handles drawing one team and running full draw.
  */
 
-import { CONFIG, drawState, actionQueue, setIsRunningFullDraw } from './state.js';
-import { getCurrentPot, getValidGroupForTeam } from './api.js';
-import { assignTeamToGroup } from './ui-highlights.js';
+import { CONFIG, actionQueue, setIsRunningFullDraw } from './state.js';
+import { getCurrentPot, getUnassignedTeamsInPot, assignTeam, clearSelection } from './actions.js';
+import { getValidGroupForTeam } from './api.js';
+import { renderAll } from './render.js';
 
-// ===== Helper Functions =====
-export function updateCurrentPot() {
-    drawState.currentPot = getCurrentPot();
-}
-
+// ===== Status Updates =====
 export function updateDrawStatus(message) {
     document.getElementById('draw-status').textContent = message;
 }
@@ -20,7 +19,7 @@ export function drawOneTeam() {
     actionQueue.enqueue(() => processDrawOneTeam());
 }
 
-export async function processDrawOneTeam() {
+async function processDrawOneTeam() {
     const currentPot = getCurrentPot();
     if (currentPot === 0) {
         updateDrawStatus("Draw complete!");
@@ -30,11 +29,10 @@ export async function processDrawOneTeam() {
     updateDrawStatus("Drawing one team...");
 
     try {
-        const potTeams = CONFIG.pots[currentPot];
-        const unassigned = potTeams.filter(t => !(t in drawState.assignments));
+        const unassigned = getUnassignedTeamsInPot(currentPot);
 
         if (unassigned.length === 0) {
-            updateCurrentPot();
+            renderAll();
             return;
         }
 
@@ -46,7 +44,9 @@ export async function processDrawOneTeam() {
             return;
         }
 
-        assignTeamToGroup(teamName, validGroup);
+        const result = assignTeam(teamName, validGroup);
+        updateDrawStatus(result.message);
+        renderAll();
 
     } catch (error) {
         console.error("Error drawing team:", error);
@@ -65,7 +65,7 @@ export function runFullDraw(isRunning) {
     }
 }
 
-export function setFullDrawButtonState(running) {
+function setFullDrawButtonState(running) {
     setIsRunningFullDraw(running);
     const btn = document.getElementById('run-all-btn');
     if (running) {

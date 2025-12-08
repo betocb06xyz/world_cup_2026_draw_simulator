@@ -1,23 +1,26 @@
 /**
- * Assignment log and undo functionality for FIFA 2026 World Cup Draw Simulator
+ * History rendering and undo handling for FIFA World Cup Draw Simulator
+ *
+ * Pure rendering - reads from state, no direct mutations.
  */
 
-import { CONFIG, drawState, isRunningFullDraw, getGroupLetter } from './state.js';
-import { updateGroupsDisplay } from './ui-groups.js';
-import { updatePotStatus } from './ui-pots.js';
-import { clearHighlights } from './ui-highlights.js';
-import { updateCurrentPot, updateDrawStatus } from './draw.js';
-import { getFlag, getDisplayName } from './flags.js';
+import { CONFIG, isRunningFullDraw, getGroupLetter } from './state.js';
+import { getHistory, undoLastAssignment } from './actions.js';
+import { getFlag } from './flags.js';
+import { renderAll } from './render.js';
+import { updateDrawStatus } from './draw.js';
 
-// ===== Assignment Log Functions =====
-// Renders the entire log from drawState.history (single source of truth)
-export function renderAssignmentLog() {
+/**
+ * Render the assignment history log
+ */
+export function renderHistory() {
     const logContent = document.getElementById('assignment-log-content');
     logContent.innerHTML = '';
 
     const overrides = CONFIG?.display_overrides || {};
+    const history = getHistory();
 
-    for (const entry of drawState.history) {
+    for (const entry of history) {
         const teamName = entry.team;
         const groupLetter = getGroupLetter(entry.group);
         const flagCode = getFlag(teamName, overrides);
@@ -54,54 +57,21 @@ export function renderAssignmentLog() {
     logContent.scrollTop = logContent.scrollHeight;
 }
 
-export function addToHistory(teamName, group, isHost = false) {
-    drawState.history.push({ team: teamName, group: group, isHost: isHost });
-    renderAssignmentLog();
-}
-
-export function clearHistory() {
-    drawState.history = [];
-    renderAssignmentLog();
-}
-
-// ===== Undo Function =====
-export function undoLastAssignment() {
+/**
+ * Handle undo button click
+ */
+export function handleUndo() {
     // Don't undo if full draw is running
     if (isRunningFullDraw) {
         return;
     }
 
-    // Find the last non-host entry
-    if (drawState.history.length === 0) {
-        return;
+    const result = undoLastAssignment();
+
+    if (result.success) {
+        updateDrawStatus(result.message);
+        renderAll();
+    } else {
+        updateDrawStatus(result.message);
     }
-
-    const lastEntry = drawState.history[drawState.history.length - 1];
-
-    // Don't undo hosts
-    if (lastEntry.isHost) {
-        updateDrawStatus("Cannot undo host assignments.");
-        return;
-    }
-
-    // Remove from history
-    drawState.history.pop();
-
-    // Remove from assignments
-    delete drawState.assignments[lastEntry.team];
-
-    // Update UI
-    renderAssignmentLog();
-    updateGroupsDisplay();
-    updateCurrentPot();
-    updatePotStatus();
-    clearHighlights();
-
-    updateDrawStatus(`Undid ${lastEntry.team} assignment.`);
-}
-
-export function canUndo() {
-    if (drawState.history.length === 0) return false;
-    const lastEntry = drawState.history[drawState.history.length - 1];
-    return !lastEntry.isHost;
 }

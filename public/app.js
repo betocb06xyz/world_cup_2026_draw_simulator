@@ -1,19 +1,25 @@
 /**
- * FIFA 2026 World Cup Draw Simulator
+ * FIFA World Cup Draw Simulator
  * Main application entry point
+ *
+ * This module handles:
+ * - Initialization
+ * - Event listeners
+ * - Coordinating between API, actions, and UI
  */
 
-import { CONFIG, drawState, actionQueue, isRunningFullDraw } from './state.js';
-import { getInitialState } from './api.js';
-import { populatePots, updatePotStatus } from './ui-pots.js';
-import { updateGroupsDisplay } from './ui-groups.js';
-import { clearHighlights, handleGroupClick } from './ui-highlights.js';
-import { addToHistory, clearHistory, undoLastAssignment } from './history.js';
+import { CONFIG, actionQueue, isRunningFullDraw } from './state.js';
+import { fetchInitialState } from './api.js';
+import { initState, clearSelection, getSelectedTeam } from './actions.js';
+import { renderAll } from './render.js';
+import { renderHighlights } from './ui-highlights.js';
+import { handleTeamClick, handleGroupClick } from './ui-highlights.js';
 import { drawOneTeam, runFullDraw, updateDrawStatus } from './draw.js';
+import { handleUndo } from './history.js';
 
 // ===== Initialization =====
 async function init() {
-    console.log("Initializing FIFA 2026 Draw Simulator...");
+    console.log("Initializing FIFA World Cup Draw Simulator...");
 
     try {
         await initializeDraw();
@@ -25,7 +31,7 @@ async function init() {
         // Setup event listeners
         setupEventListeners();
 
-        console.log("FIFA 2026 Draw Simulator initialized successfully");
+        console.log("FIFA World Cup Draw Simulator initialized successfully");
     } catch (error) {
         console.error("Initialization error:", error);
         document.querySelector('.loading-detail').textContent =
@@ -37,23 +43,16 @@ async function init() {
 async function initializeDraw() {
     updateLoadingMessage('Connecting to solver...');
 
-    // Get initial state from API (this also loads CONFIG)
-    drawState.assignments = await getInitialState();
-    drawState.currentPot = 1;
-    drawState.selectedTeam = null;
+    // Get initial state from API
+    const { assignments, config } = await fetchInitialState();
+
+    // Initialize state layer
+    initState(config, assignments);
 
     updateLoadingMessage('Loading interface...');
 
-    // Populate UI
-    populatePots();
-    updateGroupsDisplay();
-    updatePotStatus();
-
-    // Clear history and add hosts
-    clearHistory();
-    for (const [teamName, group] of Object.entries(CONFIG.hosts)) {
-        addToHistory(teamName, group, true);
-    }
+    // Render UI
+    renderAll();
 
     updateDrawStatus("Ready to begin drawing. Hosts pre-assigned to Groups A, B, and D.");
 }
@@ -75,8 +74,8 @@ function resetDraw() {
 // ===== Event Listeners =====
 function setupEventListeners() {
     document.getElementById('reset-btn').addEventListener('click', resetDraw);
-    document.getElementById('draw-one-btn').addEventListener('click', drawOneTeam);
-    document.getElementById('undo-btn').addEventListener('click', undoLastAssignment);
+    document.getElementById('draw-one-btn').addEventListener('click', () => drawOneTeam());
+    document.getElementById('undo-btn').addEventListener('click', () => handleUndo());
     document.getElementById('run-all-btn').addEventListener('click', () => runFullDraw(isRunningFullDraw));
 
     // Add click listeners to groups for two-click confirmation
@@ -88,10 +87,11 @@ function setupEventListeners() {
 
     // Cancel selection when clicking outside
     document.addEventListener('click', (e) => {
-        if (drawState.selectedTeam &&
+        if (getSelectedTeam() &&
             !e.target.closest('.team-item') &&
             !e.target.closest('.group')) {
-            clearHighlights();
+            clearSelection();
+            renderHighlights();
             updateDrawStatus('Selection cancelled.');
         }
     });
@@ -100,7 +100,7 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
             e.preventDefault();
-            undoLastAssignment();
+            handleUndo();
         }
     });
 }

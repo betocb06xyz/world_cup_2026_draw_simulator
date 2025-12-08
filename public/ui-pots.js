@@ -1,13 +1,18 @@
 /**
- * Pot rendering and team items for FIFA 2026 World Cup Draw Simulator
+ * Pot rendering for FIFA World Cup Draw Simulator
+ *
+ * Pure rendering - reads from state, no mutations.
  */
 
-import { CONFIG, drawState } from './state.js';
-import { getCurrentPot } from './api.js';
+import { CONFIG } from './state.js';
+import { getCurrentPot, isTeamAssigned } from './actions.js';
 import { getFlag, getDisplayName } from './flags.js';
 import { handleTeamClick } from './ui-highlights.js';
 
-export function populatePots() {
+/**
+ * Render all pots with teams
+ */
+export function renderPots() {
     if (!CONFIG) return;
 
     const overrides = CONFIG.display_overrides || {};
@@ -72,37 +77,40 @@ function createTeamItem(teamName, pot, overrides) {
     return div;
 }
 
-export function updatePotStatus() {
+/**
+ * Update pot status indicators and team item states
+ */
+export function renderPotStatus() {
     if (!CONFIG) return;
 
-    const overrides = CONFIG.display_overrides || {};
     const numPots = Object.keys(CONFIG.pots).length;
+    const currentPot = getCurrentPot();
 
     for (let pot = 1; pot <= numPots; pot++) {
         const teams = CONFIG.pots[pot];
-        const assigned = teams.filter(t => t in drawState.assignments).length;
+        const assigned = teams.filter(t => isTeamAssigned(t)).length;
         const total = teams.length;
 
         document.getElementById(`pot-${pot}-status`).textContent = `${assigned}/${total}`;
 
         const potElement = document.getElementById(`pot-${pot}`);
-        potElement.classList.toggle('active', pot === drawState.currentPot);
+        potElement.classList.toggle('active', pot === currentPot);
 
         teams.forEach(teamName => {
             const teamItem = document.querySelector(`.team-item[data-team="${teamName}"]`);
             if (teamItem) {
-                const isAssigned = teamName in drawState.assignments;
-                teamItem.classList.toggle('assigned', isAssigned);
-                teamItem.classList.toggle('disabled', pot !== drawState.currentPot);
-                teamItem.classList.toggle('clickable', pot === drawState.currentPot && !isAssigned);
+                const assigned = isTeamAssigned(teamName);
+                teamItem.classList.toggle('assigned', assigned);
+                teamItem.classList.toggle('disabled', pot !== currentPot);
+                teamItem.classList.toggle('clickable', pot === currentPot && !assigned);
             }
         });
     }
 
-    const currentPot = getCurrentPot();
+    const currentPotText = document.getElementById('current-pot-text');
     if (currentPot === 0) {
-        document.getElementById('current-pot-text').textContent = 'Complete!';
+        currentPotText.textContent = 'Complete!';
     } else {
-        document.getElementById('current-pot-text').textContent = `Pot ${currentPot}`;
+        currentPotText.textContent = `Pot ${currentPot}`;
     }
 }

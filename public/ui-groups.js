@@ -1,24 +1,13 @@
 /**
- * Group display and slot rendering for FIFA 2026 World Cup Draw Simulator
+ * Group rendering for FIFA World Cup Draw Simulator
+ *
+ * Pure rendering - reads from state, no mutations.
  */
 
 import { getDisplayOrders, getSlotToPot, getDisplayOrderForGroup } from './config.js';
-import { CONFIG, drawState } from './state.js';
+import { CONFIG } from './state.js';
+import { getAssignments, getTeamPot } from './actions.js';
 import { getFlag, getDisplayName } from './flags.js';
-
-/**
- * Get pot number for a team
- */
-function getTeamPot(teamName) {
-    if (!CONFIG) return null;
-    const numPots = Object.keys(CONFIG.pots).length;
-    for (let pot = 1; pot <= numPots; pot++) {
-        if (CONFIG.pots[pot].includes(teamName)) {
-            return pot;
-        }
-    }
-    return null;
-}
 
 /**
  * Check if team is a host
@@ -28,13 +17,17 @@ function isHost(teamName) {
     return teamName in CONFIG.hosts;
 }
 
-export function updateGroupsDisplay() {
+/**
+ * Render all groups with assigned teams
+ */
+export function renderGroups() {
     if (!CONFIG) return;
 
     const overrides = CONFIG.display_overrides || {};
     const numGroups = CONFIG.pots[1]?.length || 12;
     const displayOrders = getDisplayOrders();
     const slotToPotMap = getSlotToPot();
+    const assignments = getAssignments();
 
     for (let group = 1; group <= numGroups; group++) {
         const groupElement = document.getElementById(`group-${group}`);
@@ -58,7 +51,7 @@ export function updateGroupsDisplay() {
         });
 
         // Fill in assigned teams (overwrites pot number)
-        for (const [teamName, assignedGroup] of Object.entries(drawState.assignments)) {
+        for (const [teamName, assignedGroup] of Object.entries(assignments)) {
             if (assignedGroup === group) {
                 const pot = getTeamPot(teamName);
                 if (!pot) continue;
